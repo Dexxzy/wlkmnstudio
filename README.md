@@ -1,6 +1,6 @@
 # WLKMN Studio (beta) 
 # This software is inherently risky to use. It has never bricked my device, but some patches are riskier than others. Use with discretion.
-I am not responsible for any damage caused by use of WLKMN.studio, but I doubt anything will break. It's all been pretty thoroughly tested.
+There are high-level recovery tools included in the software, but PLEASE be careful; some things can cause boot loops quite easily.
 
 This is currently in development; some things will be slightly broken (sorry!)
 
