@@ -506,18 +506,23 @@ class App(tk.Tk):
         dlg.configure(bg=BG)
         dlg.transient(self)
         ttk.Label(dlg, text="🚑  Bootloop Recovery", font=("", 16, "bold")).pack(pady=(14, 2))
-        ttk.Label(dlg, text="Walkman stuck rebooting after a theme or flash? This catches it and "
-                            "restores a good player app.", foreground=SUB, wraplength=580,
+        ttk.Label(dlg, text="Walkman stuck rebooting after a theme / player-app flash? This catches it "
+                            "and re-installs a known-good player app.", foreground=SUB, wraplength=580,
                   justify="center").pack(pady=(0, 8))
         info = (
+            "What this fixes\n"
+            "This targets ONE common cause: a bad flash of the player app (HgrmMediaPlayerApp) — the\n"
+            "theme, font-swap, LDAC and UI mods all patch that app, and it's the usual loop culprit.\n\n"
             "How it works\n"
             "1.  Plug the Walkman into USB and leave it powered — it will keep rebooting; that's fine.\n"
             "2.  This grabs the brief moment adb sees the device during each reboot.\n"
             "3.  It restores a known-good HgrmMediaPlayerApp with the correct 755 root:root perms —\n"
             "     a restore that loses the execute bit is itself the usual cause of the loop.\n"
             "4.  It stops automatically once the device stays up.\n\n"
-            "If the loop was caused by something other than a UI/theme mod (splash, boot animation, "
-            "font), use Revert All once the device is back."
+            "What it does NOT fix\n"
+            "If the loop came from a different mod (splash, boot animation, font), let this get you back\n"
+            "to a booting state, then use Revert All. A loop from a bad partition, kernel or full-firmware\n"
+            "flash is outside its scope — recover those by re-flashing firmware with Walkman One / MrWalkman."
         )
         body = tk.Text(dlg, height=10, wrap="word", bg=BG2, fg=FG, relief="flat",
                        padx=10, pady=8, highlightthickness=0)

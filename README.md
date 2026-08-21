@@ -10,9 +10,11 @@ Works on a **[Walkman One](https://www.mrwalkman.com/)** (rooted) NW-A30/A40/A50
 [![tests](https://github.com/Dexxzy/wlkmnstudio/actions/workflows/tests.yml/badge.svg)](https://github.com/Dexxzy/wlkmnstudio/actions/workflows/tests.yml)
 
 > ⚠️ **Please read:** this modifies system files on your Walkman, so there's always *some* risk — a bad
-> flash can cause a boot loop. Every change is backed up first and can be undone, and there's a built-in
-> **Bootloop Recovery** tool, so most things are fixable. But go carefully, and don't flash things
-> carelessly. It's never bricked a device in testing — no promises, though. Use at your own risk.
+> flash can cause a boot loop. Every change is backed up first and can be undone, and the built-in
+> **Bootloop Recovery** tool re-flashes a known-good player app — which covers the most common loop (a
+> bad theme / player-app flash). Deeper trouble, like a bad partition or full-firmware flash, is outside
+> its scope and needs re-flashing firmware. So go carefully. It's never bricked a device in testing —
+> no promises, though. Use at your own risk.
 
 ---
 
@@ -55,8 +57,10 @@ The first run sets things up (a minute or two) and then the app opens. That's it
 3. **Pick a mod → Preview → Apply → ⟳ Reboot** to see it on the device.
 4. Changed your mind? Every mod has a **Revert** button (or **Revert All**). Then reboot.
 
-**If a flash ever leaves it stuck rebooting:** don't panic — hit the red **🚑 Bootloop Recovery** button,
-keep it plugged in, and it'll restore a working state. Everything you flash is backed up + verified first.
+**If a theme or player-app flash leaves it stuck rebooting:** don't panic — hit the red **🚑 Bootloop
+Recovery** button, keep it plugged in, and it re-installs a known-good player app to get you booting
+again. (A bad splash / boot-animation / font is fixed with **Revert All** once you're back; a
+full-firmware problem needs re-flashing firmware.) Everything you flash is backed up + verified first.
 
 ---
 
@@ -85,7 +89,7 @@ keep it plugged in, and it'll restore a working state. Everything you flash is b
 | Mod | What it does |
 |---|---|
 | **Fast Boot (skip DB scan)** | Kills the “Creating Database” scan that blocks **every** boot — while USB transfers still rescan your library automatically. The big one. |
-| **Clock Fix** · **Clean Junk** | Stop clock-related DB rebuilds · strip Mac/Windows junk files off the card |
+| **Clock Fix** *(legacy)* · **Clean Junk** | Fix the "stuck in 2018" clock that forces DB rebuilds — Fast Boot usually covers this now · tidy Mac/Windows junk off the card |
 | **Library Stats** · **Find Duplicates** · **Storage Info** · **Boot Log** | Read-only info tools |
 
 **⚙️ System** — Walkman One Settings (sound sig / region / gain…), NVP Flags, Full Backup, Reboot / Restart UI.

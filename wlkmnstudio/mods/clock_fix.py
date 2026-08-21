@@ -6,17 +6,18 @@ from .. import device
 @register
 class ClockFix(Mod):
     id = "clock_fix"
-    name = "Clock Fix (DB-rebuild)"
+    name = "Clock Fix (legacy — see Fast Boot)"
     category = "QOL"
     status = "built"
     risk = "low"
-    description = ("KILLS the #1 gripe — the boot-time database rebuild. The A50 clock sits at the 2018 "
-                   "firmware date, so the genesys-db scanner sees your SD tracks (2024-2026 dates) as "
-                   "'from the future' and re-imports the whole library on every boot. This sets the "
-                   "clock + RTC to your computer's time; the RTC holds it across reboots → the scan goes "
-                   "incremental and boot is dramatically faster. Verified: clock persisted a reboot, boot "
-                   "went 'leagues faster'. (If a unit's RTC cell is dead and it reverts, a boot-script "
-                   "persist via prepare_contentroot.sh is the fallback.)")
+    description = ("LEGACY — for most people Fast Boot (skip DB scan) is now the better fix; this stays "
+                   "for the specific 'clock is stuck in 2018' case. When the clock sits at the old "
+                   "firmware date, the genesys-db scanner sees your SD tracks (2024-2026 dates) as 'from "
+                   "the future' and re-imports the whole library on every boot. This sets the clock + RTC "
+                   "to your computer's time; the RTC holds it across reboots so the scan goes incremental "
+                   "and boot speeds up. Verified: clock persisted a reboot, boot went much faster. If a "
+                   "unit's RTC cell is dead and it reverts, just use Fast Boot instead. Harmless to run "
+                   "alongside Fast Boot — it only corrects the clock.")
 
     def _now(self):
         return datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
