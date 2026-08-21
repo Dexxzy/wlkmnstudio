@@ -4,7 +4,7 @@ I am not responsible for any damage caused by use of WLKMN.studio, but I doubt a
 
 This is currently in development; some things will be slightly broken (sorry!)
 
-Design your Sony **NW-A50** Walkman's visual identity — **boot animation, power-on splash, UI font** —
+Design your Sony **NW-A30 - A50** Walkman's visual identity — **boot animation, power-on splash, UI font** —
 from your own logo/GIF/colors, preview it, and flash it safely. A native cross-platform GUI (Mac +
 Windows + Linux).
 
@@ -16,9 +16,11 @@ so it drives people to Mr Walkman's firmware, and it's designed to sit alongside
 > + bundled open-license fonts. Original files are backed up and md5-verified before anything is written.
 
 ## Requirements
-- A **Sony NW-A50 series** Walkman running **Walkman One**, rooted, USB-debugging on.
+- A **Sony NW-A30 - A50 series** Walkman running **Walkman One**, rooted, USB-debugging on.
 - **adb** on your PATH (Android platform-tools).
 - **Python 3.10+** with Tk (see `requirements.txt` for the per-OS Tk install).
+
+  This software was developed on and for an A50 series walkman, although it should work on the A30 & A40 as well.
 
 ## Install & run
 **Full step-by-step for macOS / Windows / Linux → [INSTALL.md](INSTALL.md).** Quick version:
