@@ -17,6 +17,7 @@ so it drives people to Mr Walkman's firmware, and it's designed to sit alongside
 - **Python 3.10+** with Tk (see `requirements.txt` for the per-OS Tk install).
 
 ## Install & run
+**Full step-by-step for macOS / Windows / Linux → [INSTALL.md](INSTALL.md).** Quick version:
 ```bash
 pip install -r requirements.txt
 python run.py            # or: python -m wlkmnstudio
