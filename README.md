@@ -4,6 +4,8 @@ There are high-level recovery tools included in the software, but PLEASE be care
 
 This is currently in development; some things will be slightly broken (sorry!)
 
+# We have almost fixed the DB reload on boot problem, should be released tmr.
+
 **[website](https://wlkmn.studio)**
 
 Design your Sony **NW-A30 - A50** Walkman's visual identity — **boot animation, power-on splash, UI font** —
