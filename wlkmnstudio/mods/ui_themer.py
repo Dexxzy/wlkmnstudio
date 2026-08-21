@@ -45,10 +45,35 @@ class UIThemer(Mod):
     HEX_SLOTS = [
         ("spectrum_low",  viewstyle.HARDCODED["spectrum_low"],  "Spectrum gradient (low)"),
         ("spectrum_high", viewstyle.HARDCODED["spectrum_high"], "Spectrum gradient (high)"),
+        ("separator",     viewstyle.HARDCODED["separator"],     "Separator / divider lines"),
     ]
 
+    T = viewstyle.TOKENS
+    # curated one-click palettes: (colormap {qml token: hex}, hexmap {stock hex: hex}). Cohesive,
+    # legibility-checked schemes so users get a good look without picking colors.
+    PRESETS = {
+        "crimson": ({T["primary_text"]: "#CC516C", T["secondary_text"]: "#B07782",
+                     T["disabled_text"]: "#6E4149", T["vivid_text"]: "#D96A83",
+                     T["extra_text"]: "#B07782", T["background"]: "#22242A", T["vivid_bg"]: "#2A2D35"},
+                    {"#143a8b": "#6E2637", "#21d6cd": "#CC516C", "#222222": "#33262A"}),
+        "mono":    ({T["primary_text"]: "#E6E6E6", T["secondary_text"]: "#A8A8A8",
+                     T["disabled_text"]: "#6A6A6A", T["vivid_text"]: "#F0F0F0",
+                     T["extra_text"]: "#C8C8C8", T["background"]: "#1A1A1A", T["vivid_bg"]: "#252525"},
+                    {"#143a8b": "#3A3A3A", "#21d6cd": "#D8D8D8", "#222222": "#2A2A2A"}),
+        "ocean":   ({T["primary_text"]: "#7FD4E0", T["secondary_text"]: "#5A9AA8",
+                     T["disabled_text"]: "#3C5A64", T["vivid_text"]: "#9EE6F0",
+                     T["extra_text"]: "#6FB8C4", T["background"]: "#0E1E26", T["vivid_bg"]: "#16303A"},
+                    {"#222222": "#16262C"}),   # ocean keeps the stock blue/teal spectrum
+        "amber":   ({T["primary_text"]: "#E6B45C", T["secondary_text"]: "#B08A44",
+                     T["disabled_text"]: "#6E5525", T["vivid_text"]: "#F2C878",
+                     T["extra_text"]: "#C89A50", T["background"]: "#201C12", T["vivid_bg"]: "#2A2418"},
+                    {"#143a8b": "#5A3A10", "#21d6cd": "#E6B45C", "#222222": "#2A2418"}),
+    }
+
     def inputs(self):
-        fields = []
+        fields = [{"name": "preset", "type": "choice", "label": "Theme preset", "default": "custom",
+                   "options": [("custom", "Custom (use the colors below)"), ("crimson", "Crimson"),
+                               ("mono", "Mono"), ("ocean", "Ocean"), ("amber", "Amber")]}]
         for name, _tok, label in self.SLOTS:
             fields.append({"name": name, "type": "color", "label": label + "  (blank = keep)",
                            "default": "#cc516c" if name == "primary_text" else ""})
@@ -58,8 +83,13 @@ class UIThemer(Mod):
         return fields
 
     def _maps(self, config):
-        """Split the non-blank slots into a viewstyle-token colormap and a hardcoded-hex hexmap.
-        Invalid hex is passed through so viewstyle.patch() raises a clear error (catches typos)."""
+        """Build the viewstyle-token colormap + hardcoded-hex hexmap. A chosen preset wins over the
+        individual slots; 'custom' uses the slots. Invalid hex is passed through so viewstyle.patch()
+        raises a clear error (catches typos)."""
+        preset = (config.get("preset") or "custom").strip().lower()
+        if preset in self.PRESETS:
+            cmap, hmap = self.PRESETS[preset]
+            return dict(cmap), dict(hmap)
         cmap, hmap = {}, {}
         for name, tok, _label in self.SLOTS:
             v = (config.get(name) or "").strip()

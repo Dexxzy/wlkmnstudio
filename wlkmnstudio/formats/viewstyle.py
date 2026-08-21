@@ -39,6 +39,7 @@ TOKENS = {
 HARDCODED = {
     "spectrum_low":  "#143a8b",   # spectrum-analyzer gradient, low end  (blue)
     "spectrum_high": "#21d6cd",   # spectrum-analyzer gradient, high end  (teal)
+    "separator":     "#222222",   # list / title divider rules
 }
 
 
@@ -119,18 +120,20 @@ def scan(data):
     return counts
 
 
-def patch(data, colormap=None, hexmap=None):
-    """Rewrite the app's QML palette in place. Returns (new_bytes, stats).
+def patch(data, colormap=None, hexmap=None, strmap=None):
+    """Rewrite the app's embedded QML in place. Returns (new_bytes, stats).
 
     colormap : {qml_token: '#RRGGBB'}  — redirect a `viewstyle.*` binding to a static color literal.
-    hexmap   : {'#OLDHEX': '#NEWHEX'}  — swap a hardcoded literal hex (same length) wherever it appears,
-               for colors that aren't viewstyle tokens (e.g. the spectrum-analyzer gradient).
+    hexmap   : {'#OLDHEX': '#NEWHEX'}  — swap a hardcoded literal hex (same length) wherever it appears.
+    strmap   : {'old': 'new'}          — swap an arbitrary UNIQUE QML substring (e.g. a marquee speed
+               divisor). Caller must ensure `old` is unique/contextual; verify catches leftovers.
 
     stats = {'tokens': {find: count}, 'blobs': n, 'size': len}. Raises on invalid color, a blob that
     won't fit, an unexpected size change, or if any `find` still remains (fails safe — no partial write).
     """
     colormap = {t: c for t, c in (colormap or {}).items() if c}   # drop blank slots
-    hexmap = {o: n for o, n in (hexmap or {}).items() if n}
+    hexmap = {o: n for o, n in (hexmap or {}).items() if n and o != n}
+    strmap = {o: n for o, n in (strmap or {}).items() if n and o != n}
     reps = {}                                     # find bytes -> replace bytes
     for tok, col in colormap.items():
         if not _valid_hex(col):
@@ -142,6 +145,8 @@ def patch(data, colormap=None, hexmap=None):
         if not (_valid_hex(old) and _valid_hex(new)):
             raise ValueError("hexmap needs #rrggbb -> #rrggbb, got %r -> %r" % (old, new))
         reps[old.encode()] = new.encode()         # equal length by construction
+    for old, new in strmap.items():
+        reps[old.encode()] = new.encode()
     if not reps:
         raise ValueError("no colors selected")
 

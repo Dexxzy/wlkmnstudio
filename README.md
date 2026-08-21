@@ -16,6 +16,30 @@ so it drives people to Mr Walkman's firmware, and it's designed to sit alongside
 - **adb** on your PATH (Android platform-tools).
 - **Python 3.10+** with Tk (see `requirements.txt` for the per-OS Tk install).
 
+## Compatibility
+
+### Devices
+WLKMN Studio targets Sony's non-Android **"Walkman OS" (Hagoromo) platform**. Developed and tested on the
+**NW-A55**; other models on the same platform (running a Walkman One build) should work — every binpatch
+mod md5-verifies and looks for its exact target first, so on a model where an offset differs it **aborts
+cleanly instead of bricking**. Trying is low-risk.
+
+| Support | Models | Notes |
+|---|---|---|
+| ✅ Tested / expected | NW-A50 (A55/56/57), NW-A40 (A45/46/47), NW-A30 (A35/36/37) | A30/A40 have no LDAC → skip that one mod |
+| 🟡 Same platform, verify audio patches | NW-ZX300 / ZX300A, NW-WM1A / WM1Z | Theme + QOL should port; audio binpatch offsets differ per model |
+| ❌ Not supported (Android) | NW-A100, NW-ZX500, NW-A300 | Different OS entirely |
+
+Requires **Walkman One** firmware + root on any of the supported models.
+
+### Works with wampy
+Runs alongside **[wampy](https://github.com/unknown321/wampy)** (unknown321's Winamp/cassette/clock
+overlay) — *verified from wampy's source*, not assumed. wampy installs its own binaries under
+`/system/vendor/unknown321/` and starts them as a **separate boot service** (`init.wampy.rc`); it does
+**not** modify the Sony player, boot animation, splash, or fonts that WLKMN Studio edits, so there is **no
+file overlap**. Clean install order: **wampy first, then WLKMN mods** (they pull the current app and patch
+on top, md5-verified). Your themed stock UI stays put; Hold-toggle brings up wampy's overlay.
+
 ## Install & run
 **Full step-by-step for macOS / Windows / Linux → [INSTALL.md](INSTALL.md).** Quick version:
 ```bash
@@ -26,7 +50,7 @@ python run.py            # or: python -m wlkmnstudio
 > windows**. Use Homebrew (`brew install python@3.13 python-tk@3.13`, run with `python3.13`) or
 > python.org. The app checks your Tk version at startup and tells you if it's too old.
 
-## Modules (17)
+## Modules (21)
 Grouped by category in the app. Fill a mod's fields → **Preview** → **Apply** (backs up first, flashes,
 md5-verifies) → **Revert** restores from the backup ledger (`~/.wlkmnstudio/backups`). Reboot to see it.
 
@@ -37,7 +61,9 @@ md5-verifies) → **Revert** restores from the backup ledger (`~/.wlkmnstudio/ba
 | **Power-on Splash** | Replace the orange WALKMAN logo | med |
 | **UI Font** | Swap SST / SST UI for a bundled or uploaded typeface | low |
 | **UI Accent + Icons** | Recolor home icons + the EQ/streaming accent | high |
-| **UI Text Themer** | Recolor *all* main UI text + background — any color, per element | high |
+| **UI Text Themer** | Recolor *all* main UI text + background — 4 one-click presets or any color per element | high |
+| **Marquee Scroll Speed** | Tune how fast long titles scroll (slower ↔ fastest) | med |
+| **Alternate Theme** | Switch the whole UI to the firmware's second (reverse) palette | med |
 
 **🔊 Audio**
 | Module | What it does | Risk |
@@ -52,6 +78,8 @@ md5-verifies) → **Revert** restores from the backup ledger (`~/.wlkmnstudio/ba
 |---|---|---|
 | **Clock Fix (DB-rebuild)** | Set the RTC so the media DB stops rebuilding every boot — much faster startups | low |
 | **Clean /contents Junk** | Strip Mac/Windows junk files the host wrote to the card | low |
+| **Library Stats** | Track/format/hi-res/artist/album counts + size, from the media DB (read-only) | — |
+| **Find Duplicates** | Scan the media DB for duplicate tracks + wasted space (read-only) | — |
 | **Storage Info** | Report device + card usage (read-only) | — |
 | **Boot Log** | Pull boot/hang logs (read-only) | — |
 

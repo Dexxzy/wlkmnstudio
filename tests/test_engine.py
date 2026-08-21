@@ -4,7 +4,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 import numpy as np
 from PIL import Image
 
-from wlkmnstudio.formats import binpatch, bootanim, mtklogo, fonts, viewstyle
+from wlkmnstudio.formats import binpatch, bootanim, mtklogo, fonts, viewstyle, mtpdb
 
 
 def test_binpatch():
@@ -125,10 +125,40 @@ def test_viewstyle_themer():
     print("  viewstyle themer: OK (tokens->literals, size/offsets preserved, blob valid)")
 
 
+def test_mtpdb_stats():
+    import sqlite3, tempfile, os
+    fd, p = tempfile.mkstemp(); os.close(fd)
+    c = sqlite3.connect(p)
+    c.executescript(
+        "create table object_body(object_id integer, object_type int, filename text, filesize int,"
+        " is_high_resolution int, storage_no int);"
+        "create table artists(id integer); create table albumartists(id integer);"
+        "create table albums(id integer); create table genres(id integer);"
+        "create table composers(id integer); create table releaseyears(id integer, value int);")
+    c.executemany("insert into object_body values(?,?,?,?,?,?)", [
+        (1, 2, "a.flac", 1000000, 1, 2), (2, 2, "b.flac", 2000000, 0, 2),
+        (3, 2, "c.mp3", 500000, 0, 1), (4, 2, "art.png", 30000, None, 2), (5, 1, "dir", 0, None, 0)])
+    c.executemany("insert into artists values(?)", [(i,) for i in range(3)])
+    c.executemany("insert into albums values(?)", [(i,) for i in range(2)])
+    c.executescript("insert into genres values(1); insert into composers values(1);"
+                    "insert into albumartists values(1);")
+    c.executemany("insert into releaseyears values(?,?)", [(1, 0), (2, 2015), (3, 2020)])
+    c.commit(); c.close()
+    data = open(p, "rb").read(); os.remove(p)
+    s = mtpdb.stats(data)
+    assert s["tracks"] == 3 and s["by_format"]["flac"] == 2 and s["by_format"]["mp3"] == 1
+    assert s["hi_res"] == 1 and s["artists"] == 3 and s["albums"] == 2
+    assert s["year_min"] == 2015 and s["year_max"] == 2020   # year 0 excluded
+    assert s["storage"].get(2) == 3 and s["storage"].get(1) == 1
+    assert s["audio_bytes"] == 3500000                       # png excluded from audio bytes
+    print("  mtpdb stats: OK (tracks/formats/hi-res/years/storage)")
+
+
 if __name__ == "__main__":
     test_binpatch()
     test_bootanim_codec()
     test_mtklogo_565_inverse()
     test_fonts_impersonate()
     test_viewstyle_themer()
+    test_mtpdb_stats()
     print("ALL ENGINE TESTS PASSED")
