@@ -19,7 +19,7 @@ import os
 import sys
 import tempfile
 
-from . import device, ledger, profiles, monitor, disclaimer
+from . import device, ledger, profiles, monitor, disclaimer, adb_setup
 from .module import Context, REGISTRY
 from . import mods  # noqa: F401  (registers the mods)
 
@@ -42,6 +42,10 @@ def _opts(pairs):
 
 
 def _require_device():
+    try:
+        device.set_adb(adb_setup.ensure_adb())          # auto-download Platform Tools once if needed
+    except Exception as e:
+        print("Note: couldn't set up adb automatically (%s)." % e)
     d = device.detect()
     if not d.get("connected"):
         sys.exit("✗ no device on adb — plug the Walkman in over USB (do NOT enable USB Mass Storage). "

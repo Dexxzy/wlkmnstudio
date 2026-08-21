@@ -5,6 +5,12 @@ import subprocess, hashlib, os, tempfile, time
 ADB = os.environ.get("WLKMN_ADB", "adb")
 
 
+def set_adb(path):
+    """Point the wrapper at a specific adb (used after adb_setup.ensure_adb() resolves/downloads one)."""
+    global ADB
+    ADB = path
+
+
 class DeviceError(Exception):
     pass
 
