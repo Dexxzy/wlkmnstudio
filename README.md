@@ -4,7 +4,7 @@ There are high-level recovery tools included in the software, but PLEASE be care
 
 This is currently in development; some things will be slightly broken (sorry!)
 
-# We have almost fixed the DB reload on boot problem, should be released tmr.
+# The every-boot DB reload ("Creating Database") is FIXED — see the **Fast Boot** mod. Boots skip the scan; USB transfers still rescan your library automatically.
 
 **[website](https://wlkmn.studio)**
 
