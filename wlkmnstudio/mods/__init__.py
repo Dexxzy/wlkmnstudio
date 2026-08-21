@@ -20,3 +20,8 @@ from . import marquee_speed  # noqa: F401
 # alt_theme (2026-08-20): flip viewstyle.mode "normal"->"reverse" (8 sites + default) to switch the
 # whole UI to the firmware's second palette. Reversible; experimental (look = the reverse scheme).
 from . import alt_theme  # noqa: F401
+# fast_boot (2026-08-21): THE flagship — kill the every-boot "Creating Database" scan without losing
+# USB scanning. Marker-gates the scan worker in libMediaStoreService.so (code-cave stub: unlink() the
+# marker -> crawl if present else skip), + a boot watcher that drops the marker when /contents unmounts
+# (USB mass storage). Found + built via Ghidra headless; verified end-to-end on-device (revision 1->2).
+from . import fast_boot  # noqa: F401

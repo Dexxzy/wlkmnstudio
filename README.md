@@ -58,7 +58,7 @@ python run.py            # or: python -m wlkmnstudio
 > windows**. Use Homebrew (`brew install python@3.13 python-tk@3.13`, run with `python3.13`) or
 > python.org. The app checks your Tk version at startup and tells you if it's too old.
 
-## Modules (21)
+## Modules (22)
 Grouped by category in the app. Fill a mod's fields → **Preview** → **Apply** (backs up first, flashes,
 md5-verifies) → **Revert** restores from the backup ledger (`~/.wlkmnstudio/backups`). Reboot to see it.
 
@@ -84,6 +84,7 @@ md5-verifies) → **Revert** restores from the backup ledger (`~/.wlkmnstudio/ba
 **⚡ Quality of life**
 | Module | What it does | Risk |
 |---|---|---|
+| **Fast Boot (skip DB scan)** | Kill the "Creating Database" scan that blocks *every* boot — while USB transfers still rescan automatically. Marker-gates the media service + a boot watcher | high |
 | **Clock Fix (DB-rebuild)** | Set the RTC so the media DB stops rebuilding every boot — much faster startups | low |
 | **Clean /contents Junk** | Strip Mac/Windows junk files the host wrote to the card | low |
 | **Library Stats** | Track/format/hi-res/artist/album counts + size, from the media DB (read-only) | — |
