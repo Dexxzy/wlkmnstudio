@@ -10,12 +10,12 @@ import tkinter as tk
 from tkinter import ttk, filedialog, colorchooser, messagebox
 from PIL import Image, ImageTk, ImageSequence
 
-from .. import device, ledger, profiles
+from .. import device, ledger, profiles, disclaimer
 from ..module import Context, REGISTRY
 from .. import mods as _mods  # noqa: F401  (registers the mods)
 
 BACKUP_DIR = os.path.expanduser("~/.wlkmnstudio/backups")
-ACCEPT_FLAG = os.path.expanduser("~/.wlkmnstudio/accepted")
+ACCEPT_FLAG = disclaimer.ACCEPT_FLAG          # shared with the CLI (accept once, either front-end)
 
 # Dark palette with high-contrast (white) text — the default ttk 'aqua'/'default' themes render
 # low-contrast gray-on-white that's hard to read, so we force 'clam' + these colors everywhere.
@@ -29,17 +29,10 @@ MUTED = "#9aa0a8"   # de-emphasized meta
 ACC   = "#4da3ff"
 OK    = "#4ade80"
 ERR   = "#ff6b6b"
+WARN  = "#e6b45c"   # amber (med risk)
 
-RISK_TEXT = (
-    "WLKMN Studio modifies system files and partitions on your rooted Sony Walkman. "
-    "Flashing can bootloop or otherwise damage your device.\n\n"
-    "Every change is backed up and md5-verified and can be reverted from within the app — but "
-    "recovery may still require reinstalling Walkman One, and some actions carry inherent risk.\n\n"
-    "This software is provided AS IS, with NO WARRANTY. You use it entirely AT YOUR OWN RISK. "
-    "The authors accept NO liability for any damage, data loss, or bricking.\n\n"
-    "It requires Walkman One firmware on a rooted device and is not affiliated with or endorsed by Sony.\n\n"
-    "By continuing you confirm that you understand these risks and accept full responsibility."
-)
+RISK_TEXT = disclaimer.RISK_TEXT              # shared with the CLI
+RISK_COLOR = {"low": OK, "med": WARN, "high": ERR}
 
 
 class ImageView(ttk.Label):
@@ -81,7 +74,8 @@ class App(tk.Tk):
         super().__init__()
         self.withdraw()          # stay hidden until the risk agreement is accepted
         self.title("WLKMN Studio — beta")
-        self.geometry("940x680")
+        self.geometry("960x740")
+        self.minsize(820, 600)
         self._apply_theme()
         self.dev = {"connected": False}
         self.ledger = ledger.Ledger(BACKUP_DIR)
@@ -217,10 +211,20 @@ class App(tk.Tk):
         ttk.Button(top, text="🚑 Bootloop Recovery", style="Danger.TButton",
                    command=self._recovery_dialog).pack(side="left", padx=16)
         ttk.Button(top, text="Refresh", command=self.refresh_device).pack(side="right")
-        ttk.Button(top, text="Screenshot", command=self._screenshot).pack(side="right", padx=4)
-        ttk.Button(top, text="Revert All", command=self._revert_all).pack(side="right")
-        ttk.Button(top, text="Load Profile", command=self._load_profile).pack(side="right", padx=4)
-        ttk.Button(top, text="Save Profile", command=self._save_profile).pack(side="right")
+        ttk.Button(top, text="⟳ Reboot", command=self._reboot_device).pack(side="right", padx=4)
+        ttk.Button(top, text="Screenshot", command=self._screenshot).pack(side="right")
+        ttk.Button(top, text="Revert All", command=self._revert_all).pack(side="right", padx=4)
+        ttk.Button(top, text="Load Profile", command=self._load_profile).pack(side="right")
+        ttk.Button(top, text="Save Profile", command=self._save_profile).pack(side="right", padx=4)
+
+        # workflow help strip — the one-line "how this works" so new users aren't lost
+        help_ = ttk.Frame(self, padding=(10, 2))
+        help_.pack(fill="x")
+        ttk.Label(help_, foreground=SUB, wraplength=980, justify="left",
+                  text="How it works:  pick a mod → fill its fields → Preview (dry-run) → Apply "
+                       "(backs up first, then flashes) → ⟳ Reboot to see it.   Undo any mod with its "
+                       "Revert button, or Revert All.   If a flash ever bootloops, use 🚑 Bootloop "
+                       "Recovery.").pack(anchor="w")
 
         # top-level tabs = categories; each holds a sub-notebook of its mods (17 flat tabs is too many)
         self.nb = ttk.Notebook(self)
@@ -242,7 +246,8 @@ class App(tk.Tk):
         self.log = tk.Text(logf, height=7, wrap="word", bg=BG3, fg=FG,
                            insertbackground=FG, relief="flat", highlightthickness=0)
         self.log.pack(fill="x")
-        self._log("WLKMN Studio beta. Connect a Walkman One device with USB debugging + root.")
+        self._log("WLKMN Studio (beta). Connect a Walkman One device (rooted, USB debugging on), then "
+                  "hit Refresh. Pick a mod above → Preview → Apply → Reboot. Progress shows here.")
 
     def _load_logo(self, height=26):
         try:
@@ -255,10 +260,18 @@ class App(tk.Tk):
 
     def _mod_tab(self, mod, parent):
         f = ttk.Frame(parent, padding=10)
+        readonly = getattr(mod, "readonly", False)
+        # name + a color-coded risk badge (read-only mods make no changes)
+        head = ttk.Frame(f)
+        head.grid(row=0, column=0, columnspan=3, sticky="w")
+        ttk.Label(head, text=mod.name, font=("", 13, "bold")).pack(side="left")
+        if readonly:
+            ttk.Label(head, text="  READ-ONLY", foreground=ACC, font=("", 10, "bold")).pack(side="left")
+        else:
+            ttk.Label(head, text="  ● risk %s" % mod.risk,
+                      foreground=RISK_COLOR.get(mod.risk, MUTED), font=("", 10, "bold")).pack(side="left")
         ttk.Label(f, text=mod.description, wraplength=880, foreground=SUB).grid(
-            row=0, column=0, columnspan=3, sticky="w", pady=(0, 8))
-        ttk.Label(f, text=f"[{mod.category} · risk {mod.risk} · {mod.status}]",
-                  foreground=MUTED).grid(row=1, column=0, columnspan=3, sticky="w")
+            row=1, column=0, columnspan=3, sticky="w", pady=(6, 8))
         self.vars[mod.id] = {}
         r = 2
         for fld in mod.inputs():
@@ -266,15 +279,19 @@ class App(tk.Tk):
             ttk.Label(f, text=fld["label"]).grid(row=r, column=0, sticky="w", pady=3)
             self._field_widget(f, mod, fld, r)
         btns = ttk.Frame(f)
-        btns.grid(row=r + 1, column=0, columnspan=3, sticky="w", pady=10)
-        if getattr(mod, "readonly", False):
+        btns.grid(row=r + 1, column=0, columnspan=3, sticky="w", pady=(10, 2))
+        if readonly:
             ttk.Button(btns, text="Read", command=lambda m=mod: self._run(self._preview, m)).pack(side="left")
+            hint = "Read-only diagnostic — nothing is written to the device."
         else:
             ttk.Button(btns, text="Preview", command=lambda m=mod: self._run(self._preview, m)).pack(side="left")
             ttk.Button(btns, text="Apply", command=lambda m=mod: self._apply(m)).pack(side="left", padx=6)
             ttk.Button(btns, text="Revert", command=lambda m=mod: self._run(self._revert, m)).pack(side="left")
+            hint = ("Preview = dry-run · Apply = back up then flash · then ⟳ Reboot to see it · "
+                    "Revert restores the backup.")
+        ttk.Label(f, text=hint, foreground=MUTED).grid(row=r + 2, column=0, columnspan=3, sticky="w")
         view = ImageView(f)
-        view.grid(row=r + 2, column=0, columnspan=3, pady=8)
+        view.grid(row=r + 3, column=0, columnspan=3, pady=8)
         self.vars[mod.id]["_view"] = view
         return f
 
@@ -360,10 +377,36 @@ class App(tk.Tk):
     def _apply(self, mod):
         if not self._ready():
             return
-        if not messagebox.askyesno("Apply " + mod.name,
-                                   f"Flash '{mod.name}' to the device?\nOriginal is backed up first."):
+        warn = ("\n\n⚠  HIGH RISK — a bad flash of this can bootloop the device. If it does, "
+                "use 🚑 Bootloop Recovery. Revert restores the backup."
+                if mod.risk == "high" else "")
+        if not messagebox.askyesno(
+                "Apply " + mod.name,
+                f"Flash '{mod.name}' to the device?\n"
+                f"The original is backed up first, and Revert restores it.{warn}"):
             return
-        self._run(lambda m: self._log(m.apply(self._config(m), self.ctx)), mod, verb="Applying")
+
+        def work(m):
+            self._log(m.apply(self._config(m), self.ctx))
+            self.q.put(("applied", m.name))
+        self._run(work, mod, verb="Applying")
+
+    def _do_reboot(self):
+        self._log("rebooting device…")
+
+        def work():
+            try:
+                device._run(["reboot"], check=False)          # adb reboot (fire-and-forget)
+            except Exception as e:
+                self.q.put(("log", f"reboot: {e}"))
+        threading.Thread(target=work, daemon=True).start()
+
+    def _reboot_device(self):
+        if not self.dev.get("connected"):
+            messagebox.showwarning("No device", "Connect a device first.")
+            return
+        if messagebox.askyesno("Reboot", "Reboot the Walkman now?"):
+            self._do_reboot()
 
     def _preview(self, mod):
         pv = mod.preview(self._config(mod), self.ctx)
@@ -586,6 +629,11 @@ class App(tk.Tk):
                         view.show_image_bytes(pv["data"]); self._log("preview rendered")
                     else:  # text
                         self._log(pv["data"])
+                elif kind == "applied":
+                    if messagebox.askyesno("Applied ✓",
+                                           f"'{payload}' applied and backed up.\n\n"
+                                           "Reboot now to see it?"):
+                        self._do_reboot()
         except queue.Empty:
             pass
         try:
