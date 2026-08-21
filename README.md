@@ -2,7 +2,7 @@
 # This software is inherently risky to use. It has never bricked my device, but some patches are riskier than others. Use with discretion.
 There are high-level recovery tools included in the software, but PLEASE be careful; some things can cause boot loops quite easily.
 
-This is currently in development; some things will be slightly broken (sorry!)
+Connections are currently a little broken, and so is windoes. give me like a few hours
 
 # The every-boot DB reload ("Creating Database") is FIXED — see the **Fast Boot** mod. Boots skip the scan; USB transfers still rescan your library automatically.
 
