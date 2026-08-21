@@ -1,6 +1,10 @@
-# WLKMN Studio (beta)
+# WLKMN Studio (beta) 
+# This software is inherently risky to use. It has never bricked my device, but some patches are riskier than others. Use with discretion.
+I am not responsible for any damage caused by use of WLKMN.studio, but I doubt anything will break. It's all been pretty thoroughly tested.
 
-Design your Sony **NW-A50** Walkman's visual identity — **boot animation, power-on splash, UI font** —
+This is currently in development; some things will be slightly broken (sorry!)
+
+Design your Sony **NW-A30 - A50** Walkman's visual identity — **boot animation, power-on splash, UI font** —
 from your own logo/GIF/colors, preview it, and flash it safely. A native cross-platform GUI (Mac +
 Windows + Linux).
 
@@ -12,10 +16,11 @@ so it drives people to Mr Walkman's firmware, and it's designed to sit alongside
 > + bundled open-license fonts. Original files are backed up and md5-verified before anything is written.
 
 ## Requirements
-- A **Sony NW-A50 series** Walkman running **Walkman One**, rooted, USB-debugging on.
+- A **Sony NW-A30 - A50 series** Walkman running **Walkman One**, rooted, USB-debugging on.
 - **adb** on your PATH (Android platform-tools).
 - **Python 3.10+** with Tk (see `requirements.txt` for the per-OS Tk install).
 
+<<<<<<< HEAD
 ## Compatibility
 
 ### Devices
@@ -39,6 +44,9 @@ overlay) — *verified from wampy's source*, not assumed. wampy installs its own
 **not** modify the Sony player, boot animation, splash, or fonts that WLKMN Studio edits, so there is **no
 file overlap**. Clean install order: **wampy first, then WLKMN mods** (they pull the current app and patch
 on top, md5-verified). Your themed stock UI stays put; Hold-toggle brings up wampy's overlay.
+=======
+  This software was developed on and for an A50 series walkman, although it should work on the A30 & A40 as well.
+>>>>>>> 94acd7c4af9e96a18f8f550e164bd727a3e6dead
 
 ## Install & run
 **Full step-by-step for macOS / Windows / Linux → [INSTALL.md](INSTALL.md).** Quick version:
