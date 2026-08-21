@@ -44,7 +44,8 @@ def _opts(pairs):
 def _require_device():
     d = device.detect()
     if not d.get("connected"):
-        sys.exit("✗ no device on adb — connect USB + enable USB debugging, then `wlkmn detect`.")
+        sys.exit("✗ no device on adb — plug the Walkman in over USB (do NOT enable USB Mass Storage). "
+                 "It must be running Walkman One (that's what enables the connection). Then `wlkmn detect`.")
     if not d.get("root"):
         sys.exit("✗ device is not rooted (adb shell id must be uid=0). WLKMN Studio needs Walkman One + root.")
     return d
@@ -116,7 +117,7 @@ def cmd_list(a):
 def cmd_detect(a):
     d = device.detect()
     if not d.get("connected"):
-        print("  no device on adb (connect USB + enable USB debugging)")
+        print("  no device on adb (plug the Walkman in over USB; do NOT enable USB Mass Storage)")
         return
     root = "root ✓" if d.get("root") else "NOT root ✗"
     wm1 = "Walkman One ✓" if d.get("walkman_one") else "WM1? unverified"

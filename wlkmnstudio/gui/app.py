@@ -141,12 +141,15 @@ class App(tk.Tk):
             return True
         dlg = tk.Toplevel(self)
         dlg.title("WLKMN Studio — Risk Agreement")
-        dlg.geometry("560x460")
-        dlg.transient(self)
+        # NOTE: the main window is withdrawn here. A Toplevel made *transient to a withdrawn parent* is a
+        # cross-platform trap: on macOS it never maps (invisible); on Windows it's hidden from the taskbar
+        # and Alt-Tab and can open off-screen — the user sees "nothing" while the app blocks on it. So we
+        # do NOT make it transient. Instead: an independent, screen-centered, stay-on-top window that shows
+        # reliably everywhere (grab_set still makes it modal).
+        W, H = 560, 460
+        sw, sh = dlg.winfo_screenwidth(), dlg.winfo_screenheight()
+        dlg.geometry("%dx%d+%d+%d" % (W, H, max(0, (sw - W) // 2), max(0, (sh - H) // 3)))
         dlg.resizable(False, False)
-        # NOTE: the main window is withdrawn here, and a Toplevel transient to a *withdrawn* parent
-        # never maps on macOS (winfo_viewable == 0) — the disclaimer would be invisible. Force it to
-        # map + raise before grabbing (grab_set on an unmapped window is also unreliable).
         result = {"ok": False}
         dlg.configure(bg=BG)
         ttk.Label(dlg, text="Before you continue", font=("", 15, "bold")).pack(pady=(16, 4))
@@ -180,13 +183,13 @@ class App(tk.Tk):
         ttk.Button(btns, text="Quit", command=quit_).pack(side="left", padx=8)
         ttk.Button(btns, text="I Accept — Continue", command=accept).pack(side="left", padx=8)
         dlg.protocol("WM_DELETE_WINDOW", quit_)
-        # force the dialog to actually appear (see NOTE above), then make it modal
+        # force the dialog to actually appear (see NOTE above), then make it modal. Keep it topmost the
+        # whole time so it can never end up buried behind the terminal / other windows.
         dlg.deiconify()
         dlg.lift()
         dlg.attributes("-topmost", True)
         dlg.update_idletasks()
         dlg.update()
-        dlg.after(300, lambda: dlg.attributes("-topmost", False))
         dlg.focus_force()
         try:
             dlg.grab_set()
@@ -195,6 +198,8 @@ class App(tk.Tk):
         self.wait_window(dlg)
         if result["ok"]:
             self.deiconify()
+            self.lift()
+            self.focus_force()
         return result["ok"]
 
     # ---------- UI ----------
@@ -246,8 +251,9 @@ class App(tk.Tk):
         self.log = tk.Text(logf, height=7, wrap="word", bg=BG3, fg=FG,
                            insertbackground=FG, relief="flat", highlightthickness=0)
         self.log.pack(fill="x")
-        self._log("WLKMN Studio (beta). Connect a Walkman One device (rooted, USB debugging on), then "
-                  "hit Refresh. Pick a mod above → Preview → Apply → Reboot. Progress shows here.")
+        self._log("WLKMN Studio (beta). Plug in your Walkman One device over USB (don't enable USB Mass "
+                  "Storage — Walkman One turns the connection on for you), then hit Refresh. Pick a mod "
+                  "above → Preview → Apply → Reboot. Progress shows here.")
 
     def _load_logo(self, height=26):
         try:
@@ -360,7 +366,8 @@ class App(tk.Tk):
     def _set_status(self, d):
         self.dev = d
         if not d.get("connected"):
-            self.status.configure(text="⚠ no device — connect USB + enable debugging", foreground=ERR)
+            self.status.configure(text="⚠ no device — plug in the Walkman over USB (not Mass Storage)",
+                                  foreground=ERR)
         else:
             root = "root ✓" if d.get("root") else "NOT root ✗"
             wm1 = "Walkman One ✓" if d.get("walkman_one") else "WM1? (unverified)"

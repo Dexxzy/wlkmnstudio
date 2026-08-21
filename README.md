@@ -33,7 +33,9 @@ The stock UI recolored on a real NW-A55 with the **UI Text Themer** + **UI Accen
 (yes the music is weird, i dumped like 30 playlists from friends and stuff)
 
 ## Requirements
-- A **Sony NW-A30 - A50 series** Walkman running **Walkman One**, rooted, USB-debugging on.
+- A **Sony NW-A30 - A50 series** Walkman running **Walkman One** (rooted). Just plug it in over USB —
+  Walkman One provides the connection automatically; there's no "USB debugging" toggle to find. Don't
+  enable USB Mass Storage.
 - **adb** on your PATH (Android platform-tools).
 - **Python 3.10+** with Tk (see `requirements.txt` for the per-OS Tk install).
 
