@@ -19,6 +19,17 @@ so it drives people to Mr Walkman's firmware, and it's designed to sit alongside
 > Ships **no proprietary Sony files.** Every mod operates on *your* device's own assets + *your* uploads
 > + bundled open-license fonts. Original files are backed up and md5-verified before anything is written.
 
+## Screenshots
+The stock UI recolored on a real NW-A55 with the **UI Text Themer** + **UI Accent + Icons** mods
+(crimson example — every menu, list, and the now-playing screen, any color you pick):
+
+<p align="center">
+  <img src="docs/screenshots/home.png"       width="200" alt="Home screen — recolored icons + text">
+  <img src="docs/screenshots/albums.png"     width="200" alt="Albums — recolored list with cover art">
+  <img src="docs/screenshots/songlist.png"   width="200" alt="All Songs — recolored track list">
+  <img src="docs/screenshots/nowplaying.png" width="200" alt="Now Playing — recolored player">
+</p>
+
 ## Requirements
 - A **Sony NW-A30 - A50 series** Walkman running **Walkman One**, rooted, USB-debugging on.
 - **adb** on your PATH (Android platform-tools).

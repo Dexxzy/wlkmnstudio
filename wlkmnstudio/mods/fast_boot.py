@@ -29,47 +29,64 @@ class FastBoot(Mod):
         "hook in buildinfo.sh; all backed up, Revert restores stock.\n\n" + DISCLAIMER
     )
 
-    def _build(self, ctx):
-        """Pull the device's service and produce the marker-gated build. Raises ValueError on an
-        unrecognized firmware so apply() aborts before writing anything."""
-        stock = device.pull_file(SERVICE)
-        if mediastore.is_gated(stock):
-            return None                          # already patched on-device
-        return mediastore.build_gated_service(stock)
+    def _state(self):
+        """Inspect the three components on-device. Returns (svc_bytes, gated, has_watcher, hooked).
+        `gated` is True/False/None (None = unrecognized firmware)."""
+        svc = device.pull_file(SERVICE)
+        gated = mediastore.is_gated(svc)
+        has_watcher = bool(device.shell("ls %s 2>/dev/null" % mediastore.WATCHER_PATH).strip())
+        hooked = "wlkmn_scanwatch" in device.pull_file(mediastore.HOOK_TARGET).decode("utf-8", "replace")
+        return svc, gated, has_watcher, hooked
 
     def preview(self, config, ctx):
-        try:
-            gated = self._build(ctx)
-        except ValueError as e:
-            return {"kind": "text", "data": "Cannot apply on this device:\n  %s" % e}
+        svc, gated, has_watcher, hooked = self._state()
         if gated is None:
-            return {"kind": "text", "data": "Already installed on this device (service is marker-gated)."}
+            try:
+                mediastore.build_gated_service(svc)     # raises with a clear reason
+            except ValueError as e:
+                return {"kind": "text", "data": "Cannot apply on this device:\n  %s" % e}
+        if gated and has_watcher and hooked:
+            return {"kind": "text", "data": "Already fully installed (service gated, watcher + boot hook present)."}
+        todo = []
+        if not gated:
+            g = mediastore.build_gated_service(svc)
+            todo.append("marker-gated libMediaStoreService.so (%d bytes, md5 %s…)"
+                        % (len(g), device.md5_bytes(g)[:8]))
+        if not has_watcher:
+            todo.append("boot watcher  %s" % mediastore.WATCHER_PATH)
+        if not hooked:
+            todo.append("hook in       %s" % mediastore.HOOK_TARGET)
         return {"kind": "text", "data":
-                "Ready. Will install:\n"
-                "  • marker-gated libMediaStoreService.so (%d bytes, md5 %s…)\n"
-                "  • boot watcher  %s\n"
-                "  • hook in       %s\n\n"
-                "Reboot after applying: boot is instant (no 'Creating Database'); a USB transfer "
-                "still triggers a real scan.\n\n%s"
-                % (len(gated), device.md5_bytes(gated)[:8], mediastore.WATCHER_PATH,
-                   mediastore.HOOK_TARGET, DISCLAIMER)}
+                "Will install:\n  • " + "\n  • ".join(todo) +
+                "\n\nReboot after applying: boot is instant (no 'Creating Database'); a USB transfer "
+                "still triggers a real scan.\n\n" + DISCLAIMER}
 
     def apply(self, config, ctx):
-        gated = self._build(ctx)                  # may raise -> nothing written
+        svc, gated, has_watcher, hooked = self._state()
         if gated is None:
-            return "Fast Boot already installed (service already marker-gated). Nothing to do."
-        # 1) patched media service
-        ctx.ledger.backup_file(self.id + "_service", SERVICE)
-        device.install_file(gated, SERVICE, mode="755")
+            # unrecognized firmware — build_gated_service raises a clear message; nothing written
+            mediastore.build_gated_service(svc)
+        did = []
+        # 1) patched media service — only when currently stock (so the ledger backup captures stock)
+        if not gated:
+            ctx.ledger.backup_file(self.id + "_service", SERVICE)
+            device.install_file(mediastore.build_gated_service(svc), SERVICE, mode="755")
+            did.append("service")
         # 2) the /contents watcher (new file — revert removes it)
-        device.install_file(mediastore.WATCHER_SCRIPT.encode("utf-8"), mediastore.WATCHER_PATH, mode="755")
-        # 3) boot hook that launches the watcher
-        ctx.ledger.backup_file(self.id + "_hook", mediastore.HOOK_TARGET)
-        cur = device.pull_file(mediastore.HOOK_TARGET)
-        device.install_file(mediastore.hook_buildinfo(cur), mediastore.HOOK_TARGET, mode="755")
-        return ("Fast Boot installed (service + watcher + boot hook). REBOOT to activate: the "
-                "'Creating Database' screen is skipped on boot; adding music over USB still scans "
-                "automatically. Revert restores stock.")
+        if not has_watcher:
+            device.install_file(mediastore.WATCHER_SCRIPT.encode("utf-8"), mediastore.WATCHER_PATH, mode="755")
+            did.append("watcher")
+        # 3) boot hook — back up buildinfo only while it's still unhooked (so the backup is stock)
+        if not hooked:
+            ctx.ledger.backup_file(self.id + "_hook", mediastore.HOOK_TARGET)
+            cur = device.pull_file(mediastore.HOOK_TARGET)
+            device.install_file(mediastore.hook_buildinfo(cur), mediastore.HOOK_TARGET, mode="755")
+            did.append("hook")
+        if not did:
+            return "Fast Boot already fully installed. Nothing to do."
+        return ("Fast Boot installed (%s). REBOOT to activate: the 'Creating Database' screen is "
+                "skipped on boot; adding music over USB still scans automatically. Revert restores "
+                "stock." % " + ".join(did))
 
     def revert(self, ctx):
         ctx.ledger.restore(self.id + "_service")     # stock libMediaStoreService.so (remounts rw)

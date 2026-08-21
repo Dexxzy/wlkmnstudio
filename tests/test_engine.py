@@ -4,7 +4,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 import numpy as np
 from PIL import Image
 
-from wlkmnstudio.formats import binpatch, bootanim, mtklogo, fonts, viewstyle, mtpdb
+from wlkmnstudio.formats import binpatch, bootanim, mtklogo, fonts, viewstyle, mtpdb, mediastore
 
 
 def test_binpatch():
@@ -154,6 +154,32 @@ def test_mtpdb_stats():
     print("  mtpdb stats: OK (tracks/formats/hi-res/years/storage)")
 
 
+def test_fast_boot_patch():
+    """Golden-value regression for the Fast Boot (marker-gated scanner) patch — the bytes below
+    were verified end-to-end on-device (scan revision 1->2). If a refactor changes the stub layout
+    or the Thumb branch encoders, this catches it before it ships a bad libMediaStoreService.so."""
+    ms = mediastore
+    o = ms.KNOWN_BUILDS["d3268ccc423d8369043a378ba26ebe0b"]
+    # the injected stub, byte-for-byte (push/adr/blx unlink/cmp/pop/beq/skip/b.w crawl/"…rescan\0")
+    stub = ms._build_stub(o["cave"], o["unlink_plt"], o["crawl"])
+    assert stub.hex() == ("0fb505a038f61aef0028bde80f4001d0002070474df6dab9"
+                          "2f646174612f776c6b6d6e5f72657363616e00"), stub.hex()
+    # the call-site redirect (bl into the cave) and each Thumb branch encoder
+    assert ms._enc_bl(o["callsite"], o["cave"]).hex() == "c0f15efe"
+    assert ms._enc_blx(0x1d416c, 0xcfa4).hex() == "38f61aef"
+    assert ms._enc_bw(0x1d417c, 0x21534).hex() == "4df6dab9"
+    assert stub[ms._OFF_STR:] == ms.MARKER_PATH.encode() + b"\x00"   # adr resolves to the marker str
+    # build detection
+    assert "6199936247993fcac26fec6950e7da12" in ms.GATED_BUILDS
+    assert ms.is_gated(b"not a real .so") is None                    # unknown build -> None (aborts)
+    # buildinfo hook is idempotent and reversible
+    bi = b"#!/bin/sh\necho hi\n"
+    hooked = ms.hook_buildinfo(bi)
+    assert b"wlkmn_scanwatch" in hooked and ms.hook_buildinfo(hooked) == hooked
+    assert b"wlkmn_scanwatch" not in ms.unhook_buildinfo(hooked)
+    print("  fast_boot patch: OK (stub bytes, Thumb encoders, hook round-trip)")
+
+
 if __name__ == "__main__":
     test_binpatch()
     test_bootanim_codec()
@@ -161,4 +187,5 @@ if __name__ == "__main__":
     test_fonts_impersonate()
     test_viewstyle_themer()
     test_mtpdb_stats()
+    test_fast_boot_patch()
     print("ALL ENGINE TESTS PASSED")
