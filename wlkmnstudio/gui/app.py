@@ -34,6 +34,19 @@ WARN  = "#e6b45c"   # amber (med risk)
 RISK_TEXT = disclaimer.RISK_TEXT              # shared with the CLI
 RISK_COLOR = {"low": OK, "med": WARN, "high": ERR}
 
+# Plain-English risk badges. Most users are non-technical and here for one simple fix — "risk: high"
+# means nothing to them, so each badge says what it actually MEANS for their device.
+RISK_BADGE = {
+    "readonly": ("✓ Read-only — nothing is written to your device", ACC),
+    "low":      ("✓ Safe — fully reversible, can’t brick your device", OK),
+    "med":      ("⚠ Medium — reversible, but reboot and check after", WARN),
+    "high":     ("⛔ Can bootloop — reversible, and 🚑 Recovery has your back", ERR),
+}
+# safe-first ordering within a category (read-only first, bootloop-capable last)
+RISK_RANK = {"low": 1, "med": 2, "high": 3}
+# little chips that steer people to what they actually came for
+POPULAR = {"airpods_fix": "★ Most popular", "fast_boot": "★ Flagship"}
+
 
 class ImageView(ttk.Label):
     """Shows a static PIL image, or animates a GIF given as bytes."""
@@ -230,6 +243,13 @@ class App(tk.Tk):
                        "(backs up first, then flashes) → ⟳ Reboot to see it.   Undo any mod with its "
                        "Revert button, or Revert All.   If a flash ever bootloops, use 🚑 Bootloop "
                        "Recovery.").pack(anchor="w")
+        legend = ttk.Frame(help_)
+        legend.pack(anchor="w", pady=(2, 0))
+        ttk.Label(legend, text="Each mod is labelled:  ", foreground=MUTED).pack(side="left")
+        for txt, col in (("✓ Safe", OK), ("· ", MUTED), ("⚠ Reboot & check", WARN),
+                         ("· ", MUTED), ("⛔ Can bootloop (backed up + Recovery)", ERR)):
+            ttk.Label(legend, text=txt, foreground=col,
+                      font=("", 10, "bold") if col != MUTED else ("", 10)).pack(side="left")
 
         # top-level tabs = categories; each holds a sub-notebook of its mods (17 flat tabs is too many)
         self.nb = ttk.Notebook(self)
@@ -242,7 +262,11 @@ class App(tk.Tk):
             if cat not in cats:
                 continue
             sub = ttk.Notebook(self.nb)
-            for mod in cats[cat]:
+            # safe-first: read-only + low-risk mods lead, bootloop-capable ones sit at the end, so a
+            # casual user landing on a category meets the safe options before the sharp ones.
+            for mod in sorted(cats[cat],
+                              key=lambda m: 0 if getattr(m, "readonly", False)
+                              else RISK_RANK.get(m.risk, 9)):
                 sub.add(self._mod_tab(mod, sub), text=mod.name)
             self.nb.add(sub, text=f"{cat} ({len(cats[cat])})")
 
@@ -271,15 +295,18 @@ class App(tk.Tk):
         head = ttk.Frame(f)
         head.grid(row=0, column=0, columnspan=3, sticky="w")
         ttk.Label(head, text=mod.name, font=("", 13, "bold")).pack(side="left")
-        if readonly:
-            ttk.Label(head, text="  READ-ONLY", foreground=ACC, font=("", 10, "bold")).pack(side="left")
-        else:
-            ttk.Label(head, text="  ● risk %s" % mod.risk,
-                      foreground=RISK_COLOR.get(mod.risk, MUTED), font=("", 10, "bold")).pack(side="left")
+        pop = POPULAR.get(mod.id)
+        if pop:
+            ttk.Label(head, text="   " + pop, foreground=ACC, font=("", 11, "bold")).pack(side="left")
+        # plain-English risk badge on its own line so it's impossible to miss
+        badge, bcol = RISK_BADGE["readonly"] if readonly else \
+            RISK_BADGE.get(mod.risk, ("● risk %s" % mod.risk, MUTED))
+        ttk.Label(f, text=badge, foreground=bcol, font=("", 11, "bold")).grid(
+            row=1, column=0, columnspan=3, sticky="w", pady=(6, 0))
         ttk.Label(f, text=mod.description, wraplength=880, foreground=SUB).grid(
-            row=1, column=0, columnspan=3, sticky="w", pady=(6, 8))
+            row=2, column=0, columnspan=3, sticky="w", pady=(4, 8))
         self.vars[mod.id] = {}
-        r = 2
+        r = 3
         for fld in mod.inputs():
             r += 1
             ttk.Label(f, text=fld["label"]).grid(row=r, column=0, sticky="w", pady=3)
@@ -399,13 +426,24 @@ class App(tk.Tk):
     def _apply(self, mod):
         if not self._ready():
             return
-        warn = ("\n\n⚠  HIGH RISK — a bad flash of this can bootloop the device. If it does, "
-                "use 🚑 Bootloop Recovery. Revert restores the backup."
-                if mod.risk == "high" else "")
-        if not messagebox.askyesno(
+        if mod.risk == "high":
+            # extra friction for the bootloop-capable mods only: spell out the risk + the safety net,
+            # and default the dialog to "No" so a stray Enter doesn't flash it.
+            ok = messagebox.askyesno(
                 "Apply " + mod.name,
-                f"Flash '{mod.name}' to the device?\n"
-                f"The original is backed up first, and Revert restores it.{warn}"):
+                f"Flash ‘{mod.name}’ to the device?\n\n"
+                "⛔ This is a HIGH-RISK mod — a bad flash can put the device in a boot loop.\n"
+                "If that happens: keep it plugged in and hit 🚑 Bootloop Recovery, or use Revert.\n"
+                "The original is backed up + md5-verified before anything is written.\n\n"
+                "Continue?",
+                default=messagebox.NO, icon="warning")
+        else:
+            # low/med are reversible and safe — keep this quick and reassuring, not scary.
+            ok = messagebox.askyesno(
+                "Apply " + mod.name,
+                f"Apply ‘{mod.name}’?\n\n"
+                "✓ This is reversible — the original is backed up first and Revert restores it.")
+        if not ok:
             return
 
         def work(m):
