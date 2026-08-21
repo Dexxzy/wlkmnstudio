@@ -90,7 +90,7 @@ class App(tk.Tk):
             self.after(0, self.destroy)
             return
         self.after(150, self._drain)
-        self.refresh_device()
+        self.after(300, self._auto_poll)          # auto-detect the device (no need to hit Refresh)
 
     def _apply_theme(self):
         """Dark theme with white text. ttk's macOS 'aqua' theme ignores background/foreground on
@@ -355,13 +355,28 @@ class App(tk.Tk):
 
     # ---------- device ----------
     def refresh_device(self):
+        if getattr(self, "_detecting", False):
+            return                                  # one detect at a time (guards the auto-poll)
+        self._detecting = True
+
         def work():
             try:
                 d = device.detect()
             except Exception as e:
                 d = {"connected": False, "error": str(e)}
+            self._detecting = False
             self.q.put(("device", d))
         threading.Thread(target=work, daemon=True).start()
+
+    def _auto_poll(self):
+        """Keep checking for the device so the user never has to hit Refresh — plug in and it goes
+        green on its own. Fast while disconnected (catch a plug-in), slower once connected."""
+        self.refresh_device()
+        delay = 2500 if not self.dev.get("connected") else 6000
+        try:
+            self.after(delay, self._auto_poll)
+        except tk.TclError:
+            pass                                    # window closing
 
     def _set_status(self, d):
         self.dev = d
