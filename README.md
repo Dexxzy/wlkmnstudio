@@ -1,5 +1,7 @@
 # WLKMN Studio
 
+App & Docs created with assistance from Anthropic Claude. Patches found manually in Ghidra. (i cant code UI or write well lol)
+
 **Make your Sony Walkman *yours*.** Recolor the whole interface, swap the boot animation, power-on logo
 and font, tune the audio, and kill the annoying "Creating Database" scan on every boot — all from a
 simple app on your computer, with **one-click undo** for everything.
