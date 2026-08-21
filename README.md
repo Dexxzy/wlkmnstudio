@@ -1,27 +1,21 @@
-# WLKMN Studio (beta) 
-# This software is inherently risky to use. It has never bricked my device, but some patches are riskier than others. Use with discretion.
-There are high-level recovery tools included in the software, but PLEASE be careful; some things can cause boot loops quite easily.
+# WLKMN Studio
 
-Connections are currently a little broken, and so is windoes. give me like a few hours
+**Make your Sony Walkman *yours*.** Recolor the whole interface, swap the boot animation, power-on logo
+and font, tune the audio, and kill the annoying "Creating Database" scan on every boot — all from a
+simple app on your computer, with **one-click undo** for everything.
 
-# The every-boot DB reload ("Creating Database") is FIXED — see the **Fast Boot** mod. Boots skip the scan; USB transfers still rescan your library automatically.
+Works on a **[Walkman One](https://www.mrwalkman.com/)** (rooted) NW-A30/A40/A50. Free and open-source.
+**[wlkmn.studio](https://wlkmn.studio)**
 
-**[website](https://wlkmn.studio)**
+> ⚠️ **Please read:** this modifies system files on your Walkman, so there's always *some* risk — a bad
+> flash can cause a boot loop. Every change is backed up first and can be undone, and there's a built-in
+> **Bootloop Recovery** tool, so most things are fixable. But go carefully, and don't flash things
+> carelessly. It's never bricked a device in testing — no promises, though. Use at your own risk.
 
-Design your Sony **NW-A30 - A50** Walkman's visual identity — **boot animation, power-on splash, UI font** —
-from your own logo/GIF/colors, preview it, and flash it safely. A native cross-platform GUI (Mac +
-Windows + Linux).
-
-Built on top of **[Walkman One](https://www.mrwalkman.com/)** — it *requires* WM1 and a rooted device,
-so it drives people to Mr Walkman's firmware, and it's designed to sit alongside
-**[wampy](https://github.com/unknown321/wampy)** (which skins the player UI) rather than compete.
-
-> Ships **no proprietary Sony files.** Every mod operates on *your* device's own assets + *your* uploads
-> + bundled open-license fonts. Original files are backed up and md5-verified before anything is written.
+---
 
 ## Screenshots
-The stock UI recolored on a real NW-A55 with the **UI Text Themer** + **UI Accent + Icons** mods
-(crimson example — every menu, list, and the now-playing screen, any color you pick):
+The stock UI, recolored with the **UI Text Themer** + **UI Accent** mods (crimson here — pick any colors):
 
 <p align="center">
   <img src="docs/screenshots/home.png"       width="200" alt="Home screen — recolored icons + text">
@@ -30,134 +24,106 @@ The stock UI recolored on a real NW-A55 with the **UI Text Themer** + **UI Accen
   <img src="docs/screenshots/nowplaying.png" width="200" alt="Now Playing — recolored player">
 </p>
 
-(yes the music is weird, i dumped like 30 playlists from friends and stuff)
+*(yes the music's a bit weird — I dumped ~30 playlists from friends 😅)*
 
-## Requirements
-- A **Sony NW-A30 - A50 series** Walkman running **Walkman One** (rooted). Just plug it in over USB —
-  Walkman One provides the connection automatically; there's no "USB debugging" toggle to find. Don't
-  enable USB Mass Storage.
-- **adb** on your PATH (Android platform-tools).
-- **Python 3.10+** with Tk (see `requirements.txt` for the per-OS Tk install).
-
-## Compatibility
-
-### Devices
-WLKMN Studio targets Sony's non-Android **"Walkman OS" (Hagoromo) platform**. Developed and tested on the
-**NW-A55**; other models on the same platform (running a Walkman One build) should work — every binpatch
-mod md5-verifies and looks for its exact target first, so on a model where an offset differs it **aborts
-cleanly instead of bricking**. Trying is low-risk.
-
-| Support | Models | Notes |
-|---|---|---|
-| ✅ Tested / expected | NW-A50 (A55/56/57), NW-A40 (A45/46/47), NW-A30 (A35/36/37) | A30/A40 have no LDAC → skip that one mod |
-| 🟡 Same platform, verify audio patches | NW-ZX300 / ZX300A, NW-WM1A / WM1Z | Theme + QOL should port; audio binpatch offsets differ per model |
-| ❌ Not supported (Android) | NW-A100, NW-ZX500, NW-A300 | Different OS entirely |
-
-Requires **Walkman One** firmware + root on any of the supported models.
-
-### Works with wampy
-Runs alongside **[wampy](https://github.com/unknown321/wampy)** (unknown321's Winamp/cassette/clock
-overlay) — *verified from wampy's source*, not assumed. wampy installs its own binaries under
-`/system/vendor/unknown321/` and starts them as a **separate boot service** (`init.wampy.rc`); it does
-**not** modify the Sony player, boot animation, splash, or fonts that WLKMN Studio edits, so there is **no
-file overlap**. Clean install order: **wampy first, then WLKMN mods** (they pull the current app and patch
-on top, md5-verified). Your themed stock UI stays put; Hold-toggle brings up wampy's overlay.
+---
 
 ## Install & run
-**Easiest:** install Python, download this repo (green **Code → Download ZIP**), and **double-click the
-launcher** — `START.bat` on Windows, `start.command` on macOS, `start.sh` on Linux. It installs what it
-needs and opens the app. **Full beginner walkthrough → [INSTALL.md](INSTALL.md).**
 
-Prefer a terminal?
-```bash
-pip install -r requirements.txt
-python run.py            # or: python -m wlkmnstudio
-```
-> **macOS:** don't use the system `/usr/bin/python3` — it ships **Tk 8.5**, which renders **blank
-> windows**. Use Homebrew (`brew install python@3.13 python-tk@3.13`, run with `python3.13`) or
-> python.org. The app checks your Tk version at startup and tells you if it's too old.
+**The only thing you install is Python — the app grabs everything else (including adb) by itself.**
 
-## Modules (22)
-Grouped by category in the app. Fill a mod's fields → **Preview** → **Apply** (backs up first, flashes,
-md5-verifies) → **Revert** restores from the backup ledger (`~/.wlkmnstudio/backups`). Reboot to see it.
+1. **Install Python** from [python.org/downloads](https://www.python.org/downloads/)
+   *(Windows: tick “Add python.exe to PATH” in the installer).*
+2. **Download WLKMN Studio:** green **Code → Download ZIP**, then extract the ZIP.
+3. **Double-click the launcher** in that folder:
+   - **Windows** → `START.bat`
+   - **macOS** → `start.command`
+   - **Linux** → `start.sh`
+
+The first run sets things up (a minute or two) and then the app opens. That's it.
+
+👉 **Non-techy? Full step-by-step with pictures → [INSTALL.md](INSTALL.md).**
+
+---
+
+## How to use it
+1. **Plug your Walkman into the computer** with USB. Leave the player screen up — **don't** turn on
+   *USB Mass Storage*. (There's no “USB debugging” to enable; Walkman One handles the connection.)
+2. When the bar at the top of the app turns **green**, you're connected.
+3. **Pick a mod → Preview → Apply → ⟳ Reboot** to see it on the device.
+4. Changed your mind? Every mod has a **Revert** button (or **Revert All**). Then reboot.
+
+**If a flash ever leaves it stuck rebooting:** don't panic — hit the red **🚑 Bootloop Recovery** button,
+keep it plugged in, and it'll restore a working state. Everything you flash is backed up + verified first.
+
+---
+
+## What's inside
 
 **🎨 Theme**
-| Module | What it does | Risk |
-|---|---|---|
-| **Boot Animation** | Your own GIF, or a logo→line→waves intro | low |
-| **Power-on Splash** | Replace the orange WALKMAN logo | med |
-| **UI Font** | Swap SST / SST UI for a bundled or uploaded typeface | low |
-| **UI Accent + Icons** | Recolor home icons + the EQ/streaming accent | high |
-| **UI Text Themer** | Recolor *all* main UI text + background — 4 one-click presets or any color per element | high |
-| **Marquee Scroll Speed** | Tune how fast long titles scroll (slower ↔ fastest) | med |
-| **Alternate Theme** | Switch the whole UI to the firmware's second (reverse) palette | med |
+| Mod | What it does |
+|---|---|
+| **UI Text Themer** | Recolor *all* the menu/track text + background — pick any color per element, or a 1-click preset |
+| **UI Accent + Icons** | Recolor the home-screen icons + the EQ/streaming accent |
+| **Boot Animation** | Replace the startup animation with your own GIF (or a logo→waves intro) |
+| **Power-on Splash** | Replace the orange WALKMAN logo |
+| **UI Font** | Swap the interface font for a bundled or uploaded typeface |
+| **Alternate Theme** · **Marquee Scroll Speed** | Flip to the firmware's 2nd palette · tune title-scroll speed |
 
 **🔊 Audio**
-| Module | What it does | Risk |
-|---|---|---|
-| **AirPods / A2DP Fix** | The BT compatibility fix | med |
-| **SBC-XQ** | Raise the SBC max bitpool for near-transparent SBC | med |
-| **LDAC 990** | Force LDAC to 990 kbps and stop ABR auto-downgrade | med |
-| **BT Monitor** | Live read of the active BT codec / RTP state (read-only) | — |
+| Mod | What it does |
+|---|---|
+| **LDAC 990** | Force LDAC to its top 990 kbps and stop it auto-dropping quality |
+| **SBC-XQ** | Higher-quality SBC for any Bluetooth headphones |
+| **AirPods / A2DP Fix** | Fixes AirPods (and similar) that cut out over Bluetooth |
+| **BT Monitor** | Live read of what Bluetooth codec is actually playing |
 
 **⚡ Quality of life**
-| Module | What it does | Risk |
-|---|---|---|
-| **Fast Boot (skip DB scan)** | Kill the "Creating Database" scan that blocks *every* boot — while USB transfers still rescan automatically. Marker-gates the media service + a boot watcher | high |
-| **Clock Fix (DB-rebuild)** | Set the RTC so the media DB stops rebuilding every boot — much faster startups | low |
-| **Clean /contents Junk** | Strip Mac/Windows junk files the host wrote to the card | low |
-| **Library Stats** | Track/format/hi-res/artist/album counts + size, from the media DB (read-only) | — |
-| **Find Duplicates** | Scan the media DB for duplicate tracks + wasted space (read-only) | — |
-| **Storage Info** | Report device + card usage (read-only) | — |
-| **Boot Log** | Pull boot/hang logs (read-only) | — |
+| Mod | What it does |
+|---|---|
+| **Fast Boot (skip DB scan)** | Kills the “Creating Database” scan that blocks **every** boot — while USB transfers still rescan your library automatically. The big one. |
+| **Clock Fix** · **Clean Junk** | Stop clock-related DB rebuilds · strip Mac/Windows junk files off the card |
+| **Library Stats** · **Find Duplicates** · **Storage Info** · **Boot Log** | Read-only info tools |
 
-**⚙️ System**
-| Module | What it does | Risk |
-|---|---|---|
-| **Walkman One Settings** | GUI over `settings.txt` (sound sig, region, gain, icon color…) | low |
-| **NVP Flags** | Inspect NVP region/dest flags (read-only) | — |
-| **Full Backup** | Snapshot all mod targets to disk (read-only) | — |
-| **Reboot / Restart UI** | Reboot, or just respawn the player | low |
+**⚙️ System** — Walkman One Settings (sound sig / region / gain…), NVP Flags, Full Backup, Reboot / Restart UI.
 
-Top bar also has **🚑 Bootloop Recovery** (catches a rebooting device and restores a good player app
-with correct perms — see below), **Screenshot** (grabs the live framebuffer), **Save/Load Profile**,
-and **Revert All**.
+The top bar also has **🚑 Bootloop Recovery**, live **Screenshot**, **Save/Load Profile**, and **Revert All**.
 
-### Bootloop Recovery
-If a UI/theme flash leaves the Walkman rebooting in a loop, open **🚑 Bootloop Recovery**, keep the
-device plugged in, and press **Start Recovery**. It repeatedly grabs the brief adb window each reboot
-opens, restores a known-good `HgrmMediaPlayerApp` with the correct `755 root:root` permissions, and
-stops once the device stays up. (Restoring the player app *without* the execute bit is itself the
-usual cause of the loop — the app now always restores with the right mode.)
+---
 
-## How it works
-- `wlkmnstudio/formats/` — the reverse-engineered codecs: Sony `icx_bootanimation` (RGB565 BMP/desc/zip),
-  the MTK `logo` container (0x200 offset-table, 565), font name-table impersonation, and the `viewstyle`
-  QML palette rewriter (the text themer).
-- `wlkmnstudio/module.py` — every mod is a module (`build → apply(backup→write→verify) ⇄ revert`) sharing
-  one device engine + backup ledger.
-- `wlkmnstudio/device.py` — adb wrapper (partition dd-staging, system-file install, framebuffer
-  screenshot, md5 everywhere).
-- Deeper mods (UI text palette, LDAC ABR) were found with **Ghidra** headless; see `../NOTES.md`.
+## Will it work on my Walkman?
+It targets Sony's non-Android “Walkman OS” players running **Walkman One**. Developed and tested on the
+**NW-A55**. Mods check their exact target first and **abort cleanly instead of bricking** if a model
+differs, so trying is low-risk.
 
-## CLI
-```bash
-wlkmn list                 # all modules
-wlkmn detect               # device / root / Walkman One status
-wlkmn shot [out.png]       # grab the live screen
-wlkmn preview <mod> k=v …  # dry-run
-wlkmn apply   <mod> k=v …  # back up + flash
-wlkmn revert  <mod> | revert-all
-```
+| | Models |
+|---|---|
+| ✅ **Tested / expected** | NW-A50 (A55/56/57), NW-A40 (A45/46/47), NW-A30 (A35/36/37) — *A30/A40 have no LDAC, skip that mod* |
+| 🟡 **Same platform, audio patches vary** | NW-ZX300 / ZX300A, NW-WM1A / WM1Z — theme + QOL should port |
+| ❌ **Not supported** (different OS) | NW-A100, NW-ZX500, NW-A300 (Android) |
+
+**Requires Walkman One + root.** You only need **Python** installed — the app fetches adb itself.
+
+### Plays nice with [wampy](https://github.com/unknown321/wampy)
+wampy skins the *player* (Winamp/cassette overlays, EQ); WLKMN Studio themes the *system* UI, boot
+animation, splash and fonts. They don't touch the same files. Install **wampy first, then WLKMN mods**.
+
+---
+
+## Under the hood
+Everything operates on *your* device's own files (**no proprietary Sony files are shipped**) — the app
+pulls each original, patches it, verifies the result by md5, and keeps a backup so **Revert** always
+works. The deeper mods (the text palette, LDAC, the Fast Boot patch) were reverse-engineered with Ghidra.
+Prefer a terminal? There's a full CLI — run `python -m wlkmnstudio.cli list`.
 
 ## Roadmap
-EQ / DSP presets · force bit-perfect (Source Direct) · AAC max bitrate (AirPods) · live codec/bitrate
-HUD · volume-bar + status-bar theming · web gallery at **wlkmn.studio**.
+EQ / DSP presets · force bit-perfect (Source Direct) · AAC max bitrate · live codec/bitrate HUD ·
+volume-bar theming · web gallery at **wlkmn.studio**.
 
 ## Credits
-Base firmware: **Mr Walkman / Walkman One**. Companion tooling: **unknown321 / wampy, fix-coverart, wbrt**.
+Base firmware: **Mr Walkman / Walkman One**. Companion tooling: **unknown321** (wampy, fix-coverart, wbrt).
 Format references: `bgcngm/mtk-tools`, `rom1nux/mtkimg`, `roobscoob/SonyWalkmanFirmwarePatcher`,
 `97lily/2019_android_walkman`.
 
 ## License
-MIT.
+MIT — free to use, change, and share.
