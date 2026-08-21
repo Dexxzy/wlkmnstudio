@@ -25,3 +25,6 @@ from . import alt_theme  # noqa: F401
 # marker -> crawl if present else skip), + a boot watcher that drops the marker when /contents unmounts
 # (USB mass storage). Found + built via Ghidra headless; verified end-to-end on-device (revision 1->2).
 from . import fast_boot  # noqa: F401
+# theme_pack (2026-08-21): 1-click coordinated looks — composes the UI Text Themer (viewstyle palette)
+# + UI Accent (icon/accent byte-swap) into a single patch. For non-techy users who just want "make it red".
+from . import theme_pack  # noqa: F401

@@ -65,6 +65,7 @@ keep it plugged in, and it'll restore a working state. Everything you flash is b
 **🎨 Theme**
 | Mod | What it does |
 |---|---|
+| **Theme Packs** | Pick a whole coordinated look — **Crimson / Mono / Ocean / Amber** — and it recolors text, background **and** icons in one click. Easiest way to reskin. |
 | **UI Text Themer** | Recolor *all* the menu/track text + background — pick any color per element, or a 1-click preset |
 | **UI Accent + Icons** | Recolor the home-screen icons + the EQ/streaming accent |
 | **Boot Animation** | Replace the startup animation with your own GIF (or a logo→waves intro) |

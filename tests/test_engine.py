@@ -180,6 +180,17 @@ def test_fast_boot_patch():
     print("  fast_boot patch: OK (stub bytes, Thumb encoders, hook round-trip)")
 
 
+def test_theme_pack_config():
+    """Every Theme Pack must map to a real UIThemer preset + a valid accent, so a rename in one place
+    can't silently break the 1-click looks."""
+    from wlkmnstudio.mods.theme_pack import ThemePack
+    from wlkmnstudio.mods.ui_themer import UIThemer
+    for pack, (preset, accent) in ThemePack.PACKS.items():
+        assert preset in UIThemer.PRESETS, "pack '%s' references unknown preset '%s'" % (pack, preset)
+        assert len(accent) == 7 and accent.startswith("#"), "pack '%s' has a bad accent %s" % (pack, accent)
+    print("  theme_pack config: OK (%d looks map to valid presets)" % len(ThemePack.PACKS))
+
+
 if __name__ == "__main__":
     test_binpatch()
     test_bootanim_codec()
@@ -188,4 +199,5 @@ if __name__ == "__main__":
     test_viewstyle_themer()
     test_mtpdb_stats()
     test_fast_boot_patch()
+    test_theme_pack_config()
     print("ALL ENGINE TESTS PASSED")
