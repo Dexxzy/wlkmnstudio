@@ -15,6 +15,18 @@ from ..module import Context, REGISTRY
 from .. import mods as _mods  # noqa: F401  (registers the mods)
 
 BACKUP_DIR = os.path.expanduser("~/.wlkmnstudio/backups")
+ACCEPT_FLAG = os.path.expanduser("~/.wlkmnstudio/accepted")
+
+RISK_TEXT = (
+    "WLKMN Studio modifies system files and partitions on your rooted Sony Walkman. "
+    "Flashing can bootloop or otherwise damage your device.\n\n"
+    "Every change is backed up and md5-verified and can be reverted from within the app — but "
+    "recovery may still require reinstalling Walkman One, and some actions carry inherent risk.\n\n"
+    "This software is provided AS IS, with NO WARRANTY. You use it entirely AT YOUR OWN RISK. "
+    "The authors accept NO liability for any damage, data loss, or bricking.\n\n"
+    "It requires Walkman One firmware on a rooted device and is not affiliated with or endorsed by Sony.\n\n"
+    "By continuing you confirm that you understand these risks and accept full responsibility."
+)
 
 
 class ImageView(ttk.Label):
@@ -54,6 +66,7 @@ class ImageView(ttk.Label):
 class App(tk.Tk):
     def __init__(self):
         super().__init__()
+        self.withdraw()          # stay hidden until the risk agreement is accepted
         self.title("WLKMN Studio — beta")
         self.geometry("940x680")
         self.dev = {"connected": False}
@@ -64,8 +77,60 @@ class App(tk.Tk):
         self.choicemap = {}     # (mod.id, field) -> {label: value}
         self.q = queue.Queue()
         self._build()
+        self.declined = not self._accept_risk()   # modal gate; deiconifies on accept
+        if self.declined:
+            self.after(0, self.destroy)
+            return
         self.after(150, self._drain)
         self.refresh_device()
+
+    def _accept_risk(self):
+        """Modal risk agreement shown before the app is usable. Remembered after first accept.
+        Returns True if accepted, False if the user quit."""
+        if os.path.exists(ACCEPT_FLAG):
+            self.deiconify()
+            return True
+        dlg = tk.Toplevel(self)
+        dlg.title("WLKMN Studio — Risk Agreement")
+        dlg.geometry("560x460")
+        dlg.transient(self)
+        dlg.grab_set()                 # modal
+        dlg.resizable(False, False)
+        result = {"ok": False}
+        ttk.Label(dlg, text="Before you continue", font=("", 15, "bold")).pack(pady=(16, 4))
+        ttk.Label(dlg, text="Read and accept the risk to use WLKMN Studio.",
+                  foreground="#888").pack()
+        body = tk.Text(dlg, wrap="word", height=14, relief="flat", padx=10, pady=8)
+        body.insert("1.0", RISK_TEXT)
+        body.configure(state="disabled")
+        body.pack(padx=16, pady=10, fill="both", expand=True)
+        agree = tk.BooleanVar(value=False)
+        ttk.Checkbutton(dlg, text="I understand and accept the risk", variable=agree).pack()
+        btns = ttk.Frame(dlg)
+        btns.pack(pady=12)
+
+        def accept():
+            if not agree.get():
+                messagebox.showwarning("Please confirm", "Tick the box to accept the risk.", parent=dlg)
+                return
+            try:
+                os.makedirs(os.path.dirname(ACCEPT_FLAG), exist_ok=True)
+                open(ACCEPT_FLAG, "w").write("accepted\n")
+            except OSError:
+                pass
+            result["ok"] = True
+            dlg.destroy()
+
+        def quit_():
+            dlg.destroy()
+
+        ttk.Button(btns, text="Quit", command=quit_).pack(side="left", padx=8)
+        ttk.Button(btns, text="I Accept — Continue", command=accept).pack(side="left", padx=8)
+        dlg.protocol("WM_DELETE_WINDOW", quit_)
+        self.wait_window(dlg)
+        if result["ok"]:
+            self.deiconify()
+        return result["ok"]
 
     # ---------- UI ----------
     CATEGORY_ORDER = ["Theme", "Audio", "QOL", "System"]
@@ -376,7 +441,10 @@ def main():
             "  • Homebrew:  brew install python@3.13 python-tk@3.13   then run with python3.13\n"
             "  • or install Python from python.org (bundles a working Tk)\n\n" % tk.TkVersion)
         sys.exit(1)
-    App().mainloop()
+    app = App()
+    if getattr(app, "declined", False):
+        return                       # user did not accept the risk agreement
+    app.mainloop()
 
 
 if __name__ == "__main__":
