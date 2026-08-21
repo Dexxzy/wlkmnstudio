@@ -115,6 +115,19 @@ def install_file(data, remote, mode="644"):
     return want
 
 
+def stat_mode(remote):
+    """Octal permission string of a remote file, e.g. '755'. None if it can't be read. Used so a
+    restore puts the ORIGINAL mode back — restoring an executable (the player app) as 644 drops the
+    execute bit and the watchdog then bootloops the device."""
+    try:
+        out = shell(f"busybox stat -c %a {remote} 2>/dev/null").strip()
+    except DeviceError:
+        return None
+    if out and all(c in "01234567" for c in out) and 3 <= len(out) <= 4:
+        return out
+    return None
+
+
 def pidof(name):
     out = shell(f"busybox pidof {name} 2>/dev/null || ps 2>/dev/null | busybox grep '{name}' | busybox grep -v grep")
     for tok in out.split():
@@ -227,3 +240,94 @@ def write_partition(data, dev):
     if got != want:
         raise DeviceError(f"partition verify mismatch ({got} != {want})")
     return want
+
+
+# ---------------------------------------------------------------------------
+# Bootloop recovery
+# ---------------------------------------------------------------------------
+PLAYER_APP = "/system/vendor/sony/bin/HgrmMediaPlayerApp"
+
+
+def uptime_seconds():
+    """Device uptime in whole seconds, or None. Recovery uses it to tell a stable boot (uptime
+    keeps climbing) from a reboot loop (it keeps resetting to a few seconds)."""
+    try:
+        return int(float(shell("cat /proc/uptime", timeout=6).split()[0]))
+    except (DeviceError, ValueError, IndexError, subprocess.TimeoutExpired):
+        return None
+
+
+def _catch_window(timeout=6):
+    """Wait up to `timeout`s for adb to see a device — the brief window that opens on each reboot of
+    a bootlooping device. True if a device came up."""
+    try:
+        _run(["wait-for-device"], timeout=timeout, check=False)
+    except subprocess.TimeoutExpired:
+        return False
+    return bool(devices())
+
+
+def emergency_restore_player(good_local, on_log=None, remote=PLAYER_APP,
+                             stage="/data/.wlkmn_good_app", max_seconds=300):
+    """Bootloop rescue. Catches the brief adb window during a reboot loop and re-installs a known-good
+    player app with the correct 755 root:root perms, then confirms the device stays up.
+
+    A bad UI theme — or a restore that dropped the execute bit — stops HgrmMediaPlayerApp from
+    launching, and the watchdog then reboots the device every ~15s. We stage the good app to /data
+    once (it survives the reboots), and on each catch cp it into /system, chmod 755, chown root:root,
+    sync, and md5-verify. Success = the app is verified in place AND uptime is climbing with the
+    player process alive. Returns True on confirmed-stable, False if it couldn't confirm in time.
+
+    on_log(msg): optional callback for progress lines (the GUI pipes these to a live log).
+    """
+    log = on_log or (lambda *_: None)
+    with open(good_local, "rb") as fh:
+        good = fh.read()
+    want = md5_bytes(good)
+    log(f"good app md5 = {want}  ({len(good) / 1e6:.1f} MB)")
+    log("Plug the Walkman in over USB and leave it powered — it will keep rebooting; that's fine. Catching…")
+    staged = False
+    stable = 0
+    deadline = time.time() + max_seconds
+    tries = 0
+    while time.time() < deadline:
+        tries += 1
+        if not _catch_window(6):
+            continue
+        try:
+            shell("mount -o rw,remount /system 2>/dev/null; mount -o rw,remount / 2>/dev/null; true",
+                  timeout=10)
+            if not staged:
+                push_bytes(good, stage)          # ~9 MB, once; persists across the reboots
+                staged = True
+                log("staged good app to /data (survives reboots)")
+            shell(f"cp {stage} {remote}; chmod 755 {remote}; "
+                  f"chown root:root {remote} 2>/dev/null || chown 0.0 {remote}; sync; true",
+                  timeout=20)
+            got = md5_remote(remote)
+        except DeviceError as e:
+            log(f"  window closed mid-write ({str(e)[:60]}); retrying")
+            stable = 0
+            continue
+        if got != want:
+            log(f"  md5 still {got[:8]}… retrying")
+            stable = 0
+            continue
+        mode = stat_mode(remote) or "?"
+        u = uptime_seconds()
+        p = pidof("HgrmMediaPlayerApp")
+        log(f"  restored ✓  mode={mode} md5 ok · uptime={u}s player_pid={p}")
+        if u and u > 35 and p:
+            stable += 1
+        else:
+            stable = 0
+        if stable >= 2:
+            log("Device is stable — recovery complete. You can unplug when ready. ✓")
+            try:
+                shell(f"busybox rm -f {stage}; true")
+            except DeviceError:
+                pass
+            return True
+        time.sleep(3)
+    log("Could not confirm stability in time. Keep it plugged in and press Start Recovery again.")
+    return False

@@ -22,7 +22,6 @@ so it drives people to Mr Walkman's firmware, and it's designed to sit alongside
 - **adb** on your PATH (Android platform-tools).
 - **Python 3.10+** with Tk (see `requirements.txt` for the per-OS Tk install).
 
-<<<<<<< HEAD
 ## Compatibility
 
 ### Devices
@@ -46,9 +45,6 @@ overlay) — *verified from wampy's source*, not assumed. wampy installs its own
 **not** modify the Sony player, boot animation, splash, or fonts that WLKMN Studio edits, so there is **no
 file overlap**. Clean install order: **wampy first, then WLKMN mods** (they pull the current app and patch
 on top, md5-verified). Your themed stock UI stays put; Hold-toggle brings up wampy's overlay.
-=======
-  This software was developed on and for an A50 series walkman, although it should work on the A30 & A40 as well.
->>>>>>> 94acd7c4af9e96a18f8f550e164bd727a3e6dead
 
 ## Install & run
 **Full step-by-step for macOS / Windows / Linux → [INSTALL.md](INSTALL.md).** Quick version:
@@ -101,7 +97,16 @@ md5-verifies) → **Revert** restores from the backup ledger (`~/.wlkmnstudio/ba
 | **Full Backup** | Snapshot all mod targets to disk (read-only) | — |
 | **Reboot / Restart UI** | Reboot, or just respawn the player | low |
 
-Top bar also has **Screenshot** (grabs the live framebuffer), **Save/Load Profile**, and **Revert All**.
+Top bar also has **🚑 Bootloop Recovery** (catches a rebooting device and restores a good player app
+with correct perms — see below), **Screenshot** (grabs the live framebuffer), **Save/Load Profile**,
+and **Revert All**.
+
+### Bootloop Recovery
+If a UI/theme flash leaves the Walkman rebooting in a loop, open **🚑 Bootloop Recovery**, keep the
+device plugged in, and press **Start Recovery**. It repeatedly grabs the brief adb window each reboot
+opens, restores a known-good `HgrmMediaPlayerApp` with the correct `755 root:root` permissions, and
+stops once the device stays up. (Restoring the player app *without* the execute bit is itself the
+usual cause of the loop — the app now always restores with the right mode.)
 
 ## How it works
 - `wlkmnstudio/formats/` — the reverse-engineered codecs: Sony `icx_bootanimation` (RGB565 BMP/desc/zip),

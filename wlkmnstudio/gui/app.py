@@ -17,6 +17,19 @@ from .. import mods as _mods  # noqa: F401  (registers the mods)
 BACKUP_DIR = os.path.expanduser("~/.wlkmnstudio/backups")
 ACCEPT_FLAG = os.path.expanduser("~/.wlkmnstudio/accepted")
 
+# Dark palette with high-contrast (white) text — the default ttk 'aqua'/'default' themes render
+# low-contrast gray-on-white that's hard to read, so we force 'clam' + these colors everywhere.
+BG    = "#1e1f22"   # window background
+BG2   = "#2a2c30"   # inputs / cards / buttons
+BG3   = "#141518"   # log wells
+BORDER = "#3a3d42"
+FG    = "#f5f6f7"   # primary text — near-white, the main readability fix
+SUB   = "#c7ccd4"   # secondary text (still light, readable on dark)
+MUTED = "#9aa0a8"   # de-emphasized meta
+ACC   = "#4da3ff"
+OK    = "#4ade80"
+ERR   = "#ff6b6b"
+
 RISK_TEXT = (
     "WLKMN Studio modifies system files and partitions on your rooted Sony Walkman. "
     "Flashing can bootloop or otherwise damage your device.\n\n"
@@ -69,6 +82,7 @@ class App(tk.Tk):
         self.withdraw()          # stay hidden until the risk agreement is accepted
         self.title("WLKMN Studio — beta")
         self.geometry("940x680")
+        self._apply_theme()
         self.dev = {"connected": False}
         self.ledger = ledger.Ledger(BACKUP_DIR)
         self.ctx = Context(self.ledger)
@@ -84,6 +98,47 @@ class App(tk.Tk):
         self.after(150, self._drain)
         self.refresh_device()
 
+    def _apply_theme(self):
+        """Dark theme with white text. ttk's macOS 'aqua' theme ignores background/foreground on
+        most widgets, so switch to 'clam' (fully colorable) and set high-contrast colors app-wide."""
+        self.configure(bg=BG)
+        st = ttk.Style(self)
+        try:
+            st.theme_use("clam")
+        except tk.TclError:
+            pass
+        st.configure(".", background=BG, foreground=FG, fieldbackground=BG2,
+                     bordercolor=BORDER, lightcolor=BG2, darkcolor=BG2, troughcolor=BG2)
+        st.configure("TFrame", background=BG)
+        st.configure("TLabel", background=BG, foreground=FG)
+        st.configure("TLabelframe", background=BG, bordercolor=BORDER)
+        st.configure("TLabelframe.Label", background=BG, foreground=SUB)
+        st.configure("TButton", background=BG2, foreground=FG, bordercolor=BORDER,
+                     focuscolor=BG, padding=(10, 5))
+        st.map("TButton", background=[("active", BORDER), ("pressed", BORDER)],
+               foreground=[("disabled", "#666a70")])
+        # recovery button: reddish so it reads as the emergency action
+        st.configure("Danger.TButton", background="#5a2530", foreground="#ffdada")
+        st.map("Danger.TButton", background=[("active", "#7a2f3e"), ("pressed", "#7a2f3e")])
+        st.configure("TCheckbutton", background=BG, foreground=FG,
+                     indicatorbackground=BG2, indicatorforeground=FG, bordercolor=BORDER)
+        st.map("TCheckbutton", background=[("active", BG)], foreground=[("disabled", MUTED)],
+               indicatorbackground=[("selected", ACC), ("active", "#33363c")],
+               indicatorforeground=[("selected", "#0b0c0e")])
+        st.configure("TNotebook", background=BG, bordercolor=BORDER)
+        st.configure("TNotebook.Tab", background=BG2, foreground=SUB, padding=(12, 5))
+        st.map("TNotebook.Tab", background=[("selected", BG)], foreground=[("selected", FG)])
+        st.configure("TEntry", fieldbackground=BG2, foreground=FG, insertcolor=FG, bordercolor=BORDER)
+        st.map("TEntry", fieldbackground=[("readonly", BG2)])
+        st.configure("TCombobox", fieldbackground=BG2, foreground=FG, background=BG2,
+                     arrowcolor=FG, bordercolor=BORDER)
+        st.map("TCombobox", fieldbackground=[("readonly", BG2)], foreground=[("readonly", FG)],
+               selectbackground=[("readonly", BG2)], selectforeground=[("readonly", FG)])
+        # popup listbox of comboboxes (a Tk, not ttk, widget)
+        self.option_add("*TCombobox*Listbox.background", BG2)
+        self.option_add("*TCombobox*Listbox.foreground", FG)
+        self.option_add("*TCombobox*Listbox.selectBackground", ACC)
+
     def _accept_risk(self):
         """Modal risk agreement shown before the app is usable. Remembered after first accept.
         Returns True if accepted, False if the user quit."""
@@ -94,13 +149,17 @@ class App(tk.Tk):
         dlg.title("WLKMN Studio — Risk Agreement")
         dlg.geometry("560x460")
         dlg.transient(self)
-        dlg.grab_set()                 # modal
         dlg.resizable(False, False)
+        # NOTE: the main window is withdrawn here, and a Toplevel transient to a *withdrawn* parent
+        # never maps on macOS (winfo_viewable == 0) — the disclaimer would be invisible. Force it to
+        # map + raise before grabbing (grab_set on an unmapped window is also unreliable).
         result = {"ok": False}
+        dlg.configure(bg=BG)
         ttk.Label(dlg, text="Before you continue", font=("", 15, "bold")).pack(pady=(16, 4))
         ttk.Label(dlg, text="Read and accept the risk to use WLKMN Studio.",
-                  foreground="#888").pack()
-        body = tk.Text(dlg, wrap="word", height=14, relief="flat", padx=10, pady=8)
+                  foreground=SUB).pack()
+        body = tk.Text(dlg, wrap="word", height=14, relief="flat", padx=10, pady=8,
+                       bg=BG2, fg=FG, insertbackground=FG, highlightthickness=0)
         body.insert("1.0", RISK_TEXT)
         body.configure(state="disabled")
         body.pack(padx=16, pady=10, fill="both", expand=True)
@@ -127,6 +186,18 @@ class App(tk.Tk):
         ttk.Button(btns, text="Quit", command=quit_).pack(side="left", padx=8)
         ttk.Button(btns, text="I Accept — Continue", command=accept).pack(side="left", padx=8)
         dlg.protocol("WM_DELETE_WINDOW", quit_)
+        # force the dialog to actually appear (see NOTE above), then make it modal
+        dlg.deiconify()
+        dlg.lift()
+        dlg.attributes("-topmost", True)
+        dlg.update_idletasks()
+        dlg.update()
+        dlg.after(300, lambda: dlg.attributes("-topmost", False))
+        dlg.focus_force()
+        try:
+            dlg.grab_set()
+        except tk.TclError:
+            pass
         self.wait_window(dlg)
         if result["ok"]:
             self.deiconify()
@@ -143,6 +214,8 @@ class App(tk.Tk):
             ttk.Label(top, image=self._logo_img).pack(side="left", padx=(0, 12))
         self.status = ttk.Label(top, text="scanning for device…", font=("", 12, "bold"))
         self.status.pack(side="left")
+        ttk.Button(top, text="🚑 Bootloop Recovery", style="Danger.TButton",
+                   command=self._recovery_dialog).pack(side="left", padx=16)
         ttk.Button(top, text="Refresh", command=self.refresh_device).pack(side="right")
         ttk.Button(top, text="Screenshot", command=self._screenshot).pack(side="right", padx=4)
         ttk.Button(top, text="Revert All", command=self._revert_all).pack(side="right")
@@ -166,7 +239,8 @@ class App(tk.Tk):
 
         logf = ttk.LabelFrame(self, text="Log", padding=4)
         logf.pack(fill="x", padx=8, pady=6)
-        self.log = tk.Text(logf, height=7, wrap="word")
+        self.log = tk.Text(logf, height=7, wrap="word", bg=BG3, fg=FG,
+                           insertbackground=FG, relief="flat", highlightthickness=0)
         self.log.pack(fill="x")
         self._log("WLKMN Studio beta. Connect a Walkman One device with USB debugging + root.")
 
@@ -181,10 +255,10 @@ class App(tk.Tk):
 
     def _mod_tab(self, mod, parent):
         f = ttk.Frame(parent, padding=10)
-        ttk.Label(f, text=mod.description, wraplength=880, foreground="#555").grid(
+        ttk.Label(f, text=mod.description, wraplength=880, foreground=SUB).grid(
             row=0, column=0, columnspan=3, sticky="w", pady=(0, 8))
         ttk.Label(f, text=f"[{mod.category} · risk {mod.risk} · {mod.status}]",
-                  foreground="#999").grid(row=1, column=0, columnspan=3, sticky="w")
+                  foreground=MUTED).grid(row=1, column=0, columnspan=3, sticky="w")
         self.vars[mod.id] = {}
         r = 2
         for fld in mod.inputs():
@@ -269,11 +343,11 @@ class App(tk.Tk):
     def _set_status(self, d):
         self.dev = d
         if not d.get("connected"):
-            self.status.configure(text="⚠ no device — connect USB + enable debugging", foreground="#b00")
+            self.status.configure(text="⚠ no device — connect USB + enable debugging", foreground=ERR)
         else:
             root = "root ✓" if d.get("root") else "NOT root ✗"
             wm1 = "Walkman One ✓" if d.get("walkman_one") else "WM1? (unverified)"
-            col = "#070" if d.get("root") else "#b00"
+            col = OK if d.get("root") else ERR
             self.status.configure(text=f"{d.get('model','?')}  ·  {root}  ·  {wm1}", foreground=col)
 
     # ---------- actions (threaded) ----------
@@ -349,6 +423,100 @@ class App(tk.Tk):
             except Exception as e:
                 self.q.put(("log", f"ERROR (revert all): {e}"))
         threading.Thread(target=work, daemon=True).start()
+
+    # ---------- bootloop recovery ----------
+    def _recovery_source(self):
+        """Best known-good player-app backup to restore: the most recent ledger backup for the
+        player app whose .bak file still exists (that's the app as it was right before the last
+        flash — the good one)."""
+        cands = [e for e in self.ledger.entries
+                 if e.get("remote") == device.PLAYER_APP and os.path.exists(e.get("backup", ""))]
+        cands.sort(key=lambda e: e.get("ts", 0), reverse=True)
+        return cands[0]["backup"] if cands else ""
+
+    def _recovery_dialog(self):
+        dlg = tk.Toplevel(self)
+        dlg.title("Bootloop Recovery")
+        dlg.geometry("640x560")
+        dlg.configure(bg=BG)
+        dlg.transient(self)
+        ttk.Label(dlg, text="🚑  Bootloop Recovery", font=("", 16, "bold")).pack(pady=(14, 2))
+        ttk.Label(dlg, text="Walkman stuck rebooting after a theme or flash? This catches it and "
+                            "restores a good player app.", foreground=SUB, wraplength=580,
+                  justify="center").pack(pady=(0, 8))
+        info = (
+            "How it works\n"
+            "1.  Plug the Walkman into USB and leave it powered — it will keep rebooting; that's fine.\n"
+            "2.  This grabs the brief moment adb sees the device during each reboot.\n"
+            "3.  It restores a known-good HgrmMediaPlayerApp with the correct 755 root:root perms —\n"
+            "     a restore that loses the execute bit is itself the usual cause of the loop.\n"
+            "4.  It stops automatically once the device stays up.\n\n"
+            "If the loop was caused by something other than a UI/theme mod (splash, boot animation, "
+            "font), use Revert All once the device is back."
+        )
+        body = tk.Text(dlg, height=10, wrap="word", bg=BG2, fg=FG, relief="flat",
+                       padx=10, pady=8, highlightthickness=0)
+        body.insert("1.0", info)
+        body.configure(state="disabled")
+        body.pack(fill="x", padx=16)
+
+        srcf = ttk.Frame(dlg)
+        srcf.pack(fill="x", padx=16, pady=(8, 4))
+        ttk.Label(srcf, text="Good app:").pack(side="left")
+        src_var = tk.StringVar(value=self._recovery_source())
+        ttk.Entry(srcf, textvariable=src_var, width=46).pack(side="left", padx=6)
+
+        def pick():
+            p = filedialog.askopenfilename(parent=dlg,
+                                           title="Select a known-good HgrmMediaPlayerApp",
+                                           filetypes=[("All files", "*.*")])
+            if p:
+                src_var.set(p)
+        ttk.Button(srcf, text="Browse…", command=pick).pack(side="left")
+
+        rlog = tk.Text(dlg, height=9, wrap="word", bg=BG3, fg=FG, relief="flat",
+                       padx=8, pady=6, highlightthickness=0)
+        rlog.pack(fill="both", expand=True, padx=16, pady=8)
+
+        def rappend(msg):
+            def _do():
+                try:
+                    rlog.insert("end", str(msg) + "\n"); rlog.see("end")
+                except tk.TclError:
+                    pass
+            try:
+                dlg.after(0, _do)
+            except tk.TclError:
+                pass
+
+        btns = ttk.Frame(dlg)
+        btns.pack(pady=(0, 12))
+        start_btn = ttk.Button(btns, text="Start Recovery", style="Danger.TButton")
+
+        def start():
+            src = src_var.get().strip()
+            if not src or not os.path.exists(src):
+                messagebox.showwarning("No source app",
+                                       "Pick a known-good HgrmMediaPlayerApp file to restore.\n"
+                                       "(Your backups are in ~/.wlkmnstudio/backups)", parent=dlg)
+                return
+            start_btn.configure(state="disabled")
+
+            def work():
+                try:
+                    device.emergency_restore_player(src, on_log=rappend)
+                except Exception as e:
+                    rappend(f"ERROR: {e}")
+                try:
+                    dlg.after(0, lambda: start_btn.configure(state="normal"))
+                except tk.TclError:
+                    pass
+                self.refresh_device()
+            threading.Thread(target=work, daemon=True).start()
+
+        start_btn.configure(command=start)
+        start_btn.pack(side="left", padx=6)
+        ttk.Button(btns, text="Close", command=dlg.destroy).pack(side="left", padx=6)
 
     # ---------- live screenshot ----------
     def _screenshot(self):
