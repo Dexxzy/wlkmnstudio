@@ -1,4 +1,5 @@
-# WLKMN Studio (beta)
+# WLKMN Studio (beta) 
+# This is currently in development, some things will be slightly broken (sorry!)
 
 Design your Sony **NW-A50** Walkman's visual identity — **boot animation, power-on splash, UI font** —
 from your own logo/GIF/colors, preview it, and flash it safely. A native cross-platform GUI (Mac +
