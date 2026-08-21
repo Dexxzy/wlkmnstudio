@@ -1,94 +1,68 @@
 # Installing WLKMN Studio
 
-WLKMN Studio is a Python app (GUI + CLI). It talks to your Walkman over `adb`. You need three things:
-a **rooted Walkman One device**, **adb** on your PATH, and a **Python 3.10+ with Tk 8.6+**.
+WLKMN Studio runs on your **computer** and talks to your **Walkman** over a USB cable.
 
-> ⚠️ **macOS:** do **not** use the system `/usr/bin/python3` — it ships Tk 8.5, which renders **blank
-> windows**. Use a Homebrew or python.org Python (below). The app checks your Tk version on startup and
-> tells you if it's too old.
+**First:** your Walkman must already be running **[Walkman One](https://www.mrwalkman.com/)** (rooted).
+WLKMN Studio doesn't install that — do it first with Mr Walkman's guide.
+
+**Get WLKMN Studio:** on the [project page](https://github.com/Dexxzy/wlkmnstudio), click the green
+**“Code”** button → **“Download ZIP”**, then right-click the ZIP → **“Extract All”** (put it somewhere
+easy, like your Desktop). That extracted folder is your WLKMN Studio folder.
 
 ---
 
-## 1. Prerequisites
+## 🪟 Windows
 
-### Your Walkman
-- A **Sony NW-A50 series** Walkman running **[Walkman One](https://www.mrwalkman.com/)** (rooted).
-- Connect it by USB. On the device, turn **OFF** *USB Mass Storage* (Settings → USB) so the player UI
-  and `adb` stay active while it's plugged in.
+1. **Install Python** from [python.org/downloads](https://www.python.org/downloads/). In the installer,
+   **tick “Add python.exe to PATH.”**
+2. **Get adb, and drop it in the folder:** download
+   [Platform Tools](https://developer.android.com/tools/releases/platform-tools), unzip it, and copy these
+   3 files — **`adb.exe`, `AdbWinApi.dll`, `AdbWinUsbApi.dll`** — into your WLKMN Studio folder (next to
+   `START.bat`). *(This is instead of the confusing “add to PATH” stuff.)*
+3. **Double-click `START.bat`.** The first run sets things up, then the app opens. That's it.
 
-### Python + Tk + adb, per OS
+## 🍎 macOS
 
-**macOS (Homebrew):**
-```bash
-brew install python@3.13 python-tk@3.13 android-platform-tools
-```
-Run everything below with `python3.13`.
+1. Install Homebrew Python (the built-in one shows blank windows):
+   ```bash
+   brew install python@3.13 python-tk@3.13 android-platform-tools
+   ```
+2. **Double-click `start.command`** (or run `./start.command` in Terminal).
 
-**Windows:**
-- Install **Python** from [python.org](https://www.python.org/downloads/) — it bundles a working Tk.
-  Tick **“Add python.exe to PATH”** in the installer.
-- Install **platform-tools** (adb): download from
-  [Android SDK Platform Tools](https://developer.android.com/tools/releases/platform-tools), unzip, and
-  add the folder to your PATH.
+## 🐧 Linux
 
-**Linux (Debian/Ubuntu):**
 ```bash
 sudo apt install python3 python3-tk python3-pip adb
-```
-
-### Verify adb sees your device
-```bash
-adb devices
-```
-You should see your Walkman listed as `device` (not `unauthorized`/`offline`).
-
----
-
-## 2. Get the code
-```bash
-git clone https://github.com/Dexxzy/wlkmnstudio.git
-cd wlkmnstudio
-```
-
-## 3. Install the Python dependencies
-```bash
-python3.13 -m pip install -r requirements.txt     # macOS
-# Windows:      py -m pip install -r requirements.txt
-# Linux:        python3 -m pip install -r requirements.txt
-```
-
-## 4. Run it
-
-**GUI:**
-```bash
-python3.13 run.py       # macOS   (Windows: py run.py    Linux: python3 run.py)
-```
-On first launch you'll accept the risk agreement, then the device status bar turns green
-(`model · root ✓ · Walkman One ✓`). Pick a module tab → **Preview** → **Apply**. **Revert** or
-**Revert All** restores from the automatic backups in `~/.wlkmnstudio/backups`.
-
-**CLI** (same engine, scriptable):
-```bash
-python3.13 -m wlkmnstudio.cli list                 # all modules
-python3.13 -m wlkmnstudio.cli detect               # device / root / Walkman One
-python3.13 -m wlkmnstudio.cli shot                 # grab the live screen
-python3.13 -m wlkmnstudio.cli preview <mod> k=v    # dry-run
-python3.13 -m wlkmnstudio.cli apply   <mod> k=v    # back up + flash
-python3.13 -m wlkmnstudio.cli revert  <mod>        # or: revert-all
+./start.sh
 ```
 
 ---
 
-## Troubleshooting
+## Then: plug in your Walkman and use it
+1. Connect the Walkman by USB. On it, **do NOT turn on “USB Mass Storage”** — leave the player screen up.
+2. In WLKMN Studio, accept the one-time risk notice. When the top bar turns **green**
+   (`… · root ✓ · Walkman One ✓`) you're connected.
+3. Pick a tab → pick a mod → **Preview** → **Apply** → **⟳ Reboot** to see it. **Revert** undoes any mod.
 
-| Symptom | Fix |
+*(After the first time, you only need to plug in and double-click the START file again.)*
+
+---
+
+## If something goes wrong
+
+| Problem | Fix |
 |---|---|
-| **Blank / empty window** (macOS) | You're on Tk 8.5. Use Homebrew/python.org Python (see step 1). |
-| **`no device` / status stays red** | `adb devices` empty → check USB, enable USB debugging, turn off Mass Storage. |
-| **`NOT root`** | The device isn't rooted / adb isn't running as root. Walkman One provides root. |
-| **`settings.txt not readable`** | Turn **off** USB Mass Storage on the Walkman so `/contents` is mounted for the player. |
-| **`ModuleNotFoundError: PIL` / `_tkinter`** | Wrong Python. Install deps into the same Python that has Tk (step 3). |
+| **"Python was not found"** (Windows) | Re-run the python.org installer → **Modify** → tick **“Add python.exe to PATH,”** then double-click `START.bat` again. |
+| **App can't see the Walkman** (status stays red) | Check the USB cable (some only charge), the Walkman is on, and **USB Mass Storage is OFF**. |
+| **"unauthorized" device** | Look at the Walkman screen and tap **Allow / Trust**. |
+| **"'adb' is not recognized"** (Windows) | You didn't copy `adb.exe` + the two `.dll`s into the WLKMN Studio folder — see Windows step 2. |
+| **`NOT root`** | The Walkman isn't rooted — install **Walkman One** first. |
+| **Blank / empty window** (macOS) | You used the built-in Python; use Homebrew's (macOS step 1). |
+
+## Advanced / command-line
+Prefer a terminal? See the CLI section of the [README](README.md#cli). The `START` scripts just run
+`pip install -r requirements.txt` then `run.py` for you.
 
 ## Uninstall / reset
-- Remove the app folder.
-- Backups + settings live in `~/.wlkmnstudio/` — delete it to reset (this also re-shows the risk dialog).
+Delete the WLKMN Studio folder. Your backups + settings live in a hidden `.wlkmnstudio` folder in your
+home directory (`C:\Users\You\.wlkmnstudio` on Windows) — delete it to fully reset.

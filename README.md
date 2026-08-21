@@ -60,7 +60,11 @@ file overlap**. Clean install order: **wampy first, then WLKMN mods** (they pull
 on top, md5-verified). Your themed stock UI stays put; Hold-toggle brings up wampy's overlay.
 
 ## Install & run
-**Full step-by-step for macOS / Windows / Linux → [INSTALL.md](INSTALL.md).** Quick version:
+**Easiest:** install Python, download this repo (green **Code → Download ZIP**), and **double-click the
+launcher** — `START.bat` on Windows, `start.command` on macOS, `start.sh` on Linux. It installs what it
+needs and opens the app. **Full beginner walkthrough → [INSTALL.md](INSTALL.md).**
+
+Prefer a terminal?
 ```bash
 pip install -r requirements.txt
 python run.py            # or: python -m wlkmnstudio
