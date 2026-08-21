@@ -1,6 +1,11 @@
 #!/bin/bash
 # WLKMN Studio launcher (macOS) — double-click in Finder.
 cd "$(dirname "$0")"
+
+# Finder-launched apps DON'T inherit your Terminal's PATH, so a `brew install android-platform-tools`
+# adb (and python.org / Homebrew Python) can be invisible. Add the usual spots so they're found.
+export PATH="/opt/homebrew/bin:/usr/local/bin:/Library/Frameworks/Python.framework/Versions/Current/bin:$PATH"
+
 PY=python3.13
 command -v "$PY" >/dev/null 2>&1 || PY=python3
 
