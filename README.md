@@ -7,6 +7,8 @@ simple app on your computer, with **one-click undo** for everything.
 Works on a **[Walkman One](https://www.mrwalkman.com/)** (rooted) NW-A30/A40/A50. Free and open-source.
 **[wlkmn.studio](https://wlkmn.studio)**
 
+[![tests](https://github.com/Dexxzy/wlkmnstudio/actions/workflows/tests.yml/badge.svg)](https://github.com/Dexxzy/wlkmnstudio/actions/workflows/tests.yml)
+
 > ⚠️ **Please read:** this modifies system files on your Walkman, so there's always *some* risk — a bad
 > flash can cause a boot loop. Every change is backed up first and can be undone, and there's a built-in
 > **Bootloop Recovery** tool, so most things are fixable. But go carefully, and don't flash things

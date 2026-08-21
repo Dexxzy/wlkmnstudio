@@ -9,4 +9,5 @@ brotli>=1.1
 #            or install Python from python.org (bundles a working Tk)
 #   Debian/Ubuntu:  sudo apt install python3-tk
 #   Windows:        included with the python.org installer
-# adb must be on PATH (Android platform-tools).
+# adb: no need to install it — the app auto-downloads Google Platform Tools on first run if it's
+# missing (cached in ~/.wlkmnstudio/). Set $WLKMN_ADB to override, or drop an adb binary next to run.py.
