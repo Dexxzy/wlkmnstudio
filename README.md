@@ -30,6 +30,8 @@ The stock UI recolored on a real NW-A55 with the **UI Text Themer** + **UI Accen
   <img src="docs/screenshots/nowplaying.png" width="200" alt="Now Playing — recolored player">
 </p>
 
+(yes the music is weird, i dumped like 30 playlists from friends and stuff)
+
 ## Requirements
 - A **Sony NW-A30 - A50 series** Walkman running **Walkman One**, rooted, USB-debugging on.
 - **adb** on your PATH (Android platform-tools).
