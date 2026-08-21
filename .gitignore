@@ -1,0 +1,26 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.venv/
+venv/
+env/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+*.swp
+.idea/
+.vscode/
+
+# WLKMN Studio runtime data
+.wlkmnstudio/
+*.bak
+snapshots/
+
+# Local scratch
+/tmp/
+*.log

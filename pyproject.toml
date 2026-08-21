@@ -1,0 +1,27 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "wlkmn-studio"
+version = "0.1.0b0"
+description = "Open-source theming/mod suite for Sony NW-A50 Walkmans (Walkman One)"
+readme = "README.md"
+license = { text = "MIT" }
+requires-python = ">=3.10"
+dependencies = ["pillow>=10", "numpy>=1.24", "fonttools>=4.40", "brotli>=1.1"]
+
+[project.urls]
+Homepage = "https://wlkmn.studio"
+
+[project.scripts]
+wlkmn = "wlkmnstudio.cli:main"
+
+[project.gui-scripts]
+wlkmn-studio = "wlkmnstudio.gui.app:main"
+
+[tool.setuptools.packages.find]
+include = ["wlkmnstudio*"]
+
+[tool.setuptools.package-data]
+wlkmnstudio = ["assets/img/*.png", "assets/fonts/*"]

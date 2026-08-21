@@ -1,0 +1,12 @@
+pillow>=10
+numpy>=1.24
+fonttools>=4.40
+brotli>=1.1
+# --- Tk (GUI) ---
+# WLKMN Studio's GUI needs Tk 8.6+. Check yours:  python3 -c "import tkinter; print(tkinter.TkVersion)"
+#   ⚠ macOS system Python (/usr/bin/python3, 3.9) ships Tk 8.5 -> BLANK WINDOWS. Do not use it.
+#   macOS:   brew install python@3.13 python-tk@3.13   (then run with python3.13)
+#            or install Python from python.org (bundles a working Tk)
+#   Debian/Ubuntu:  sudo apt install python3-tk
+#   Windows:        included with the python.org installer
+# adb must be on PATH (Android platform-tools).
